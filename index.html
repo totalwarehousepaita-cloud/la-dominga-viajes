@@ -1837,9 +1837,23 @@
       }
 
       function photo() {
-        return `<label class="photo">📷 Añadir evidencia fotográfica
+        return `<label class="photo">📷 Tomar foto de evidencia
           <input type="file" accept="image/*" capture="environment" onchange="uploadEvidence(this)">
         </label>`;
+      }
+
+      function evidenceSection() {
+        const stageName = STEPS[step];
+        const stageEvidence = (Array.isArray(data.evidences) ? data.evidences : [])
+          .filter(e => (e.stage || "") === stageName);
+        const gallery = stageEvidence.length
+          ? `<div class="doc-gallery">${stageEvidence.map((e,i) => `<div class="doc-thumb"><img src="${esc(e.url)}" alt="Evidencia ${i+1}"><small>✓ Evidencia ${i+1}<br>${esc(e.time || "Subida")}</small></div>`).join("")}</div>`
+          : `<div style="font-size:12px;color:var(--muted);margin-top:8px">Aún no hay evidencias fotográficas en esta etapa.</div>`;
+        return `<div class="doc-upload evidence-upload">
+          <div class="doc-upload-head"><span class="doc-upload-icon">📷</span><div><b>Evidencias fotográficas</b><small>Este apartado es independiente de los documentos. Toma fotos de la unidad, carga, entrega u otras evidencias necesarias.</small></div></div>
+          ${photo()}
+          ${gallery}
+        </div>`;
       }
 
       function documentUpload(key, title, help, multiple = false) {
@@ -1849,8 +1863,8 @@
           ? `<div class="doc-gallery">${docs.map((d,i) => `<div class="doc-thumb"><img src="${esc(d.url)}" alt="${esc(title)} ${i+1}"><small>✓ ${esc(d.time || "Subido")}</small></div>`).join("")}</div>`
           : `<div class="doc-status"><img src="${esc(docs[0].url)}" alt="${esc(title)}"><div><b>✓ Documento subido correctamente</b><small>${esc(docs[0].name || title)} · ${esc(docs[0].time || "")}</small></div></div>`) : "";
         const buttonText = multiple
-          ? (docs.length ? `＋ Agregar otra foto (${docs.length} subida${docs.length === 1 ? "" : "s"})` : "📷 Subir foto de guía firmada")
-          : (docs.length ? "↻ Reemplazar documento" : "📄 Subir documento");
+          ? (docs.length ? `📷 Tomar otra foto (${docs.length} subida${docs.length === 1 ? "" : "s"})` : "📷 Tomar foto de guía firmada")
+          : (docs.length ? "📷 Volver a tomar foto del documento" : "📷 Tomar foto del documento");
         return `<div class="doc-upload">
           <div class="doc-upload-head"><span class="doc-upload-icon">${multiple ? "🖊" : "▤"}</span><div><b>${esc(title)}</b><small>${esc(help)}</small></div></div>
           <label class="photo">${buttonText}
@@ -1915,6 +1929,7 @@
           logActivity("Evidencia agregada", STEPS[step]);
           await saveNow();
           label.childNodes[0].textContent = "✓ Evidencia subida ";
+          render();
         } catch (e) {
           console.error(e);
           label.childNodes[0].textContent = "⚠ No se pudo subir. Reintentar ";
@@ -1953,7 +1968,8 @@
 
         if (step === 3)
           h = `<button class="stamp" onclick="stamp('depart')">◷ Usar fecha y hora actual</button>${field(["depart","Fecha y hora de salida","datetime-local"])}
-               ${documentUpload("departureDocument", "Documento de salida", "Toma o sube una foto legible del documento de salida antes de continuar.")}`;
+               ${documentUpload("departureDocument", "Documento de salida", "Toma una foto legible del documento de salida antes de continuar.")}
+               ${evidenceSection()}`;
 
         if (step === 4) h = delivery("1");
         if (step === 5) h = delivery("2");
@@ -1983,10 +1999,9 @@
           ${field(["arrive" + n,"Fecha y hora de llegada","datetime-local"])}
           ${field(["tempP" + n,"Temperatura (°C)","number"])}
           ${field(["p" + n + "ret","Jabas recuperadas","number"])}
-          ${documentUpload("receptionDocument" + n, "Documento de recepción · Punto " + n, "Sube una foto legible del documento de recepción correspondiente a este punto.")}
-          ${documentUpload("signedGuides" + n, "Guías firmadas · Punto " + n, "Debes subir fotos de las guías firmadas en este punto. Puedes agregar más de una foto.", true)}
-          <div class="section-intro"><i>📷</i><div><b>Fotos adicionales</b><small>Usa este apartado para evidencias fotográficas normales de la entrega.</small></div></div>
-          ${photo()}`;
+          ${documentUpload("receptionDocument" + n, "Documento de recepción · Punto " + n, "Toma una foto legible del documento de recepción correspondiente a este punto.")}
+          ${documentUpload("signedGuides" + n, "Guías firmadas · Punto " + n, "Debes tomar fotos de las guías firmadas en este punto. Puedes agregar más de una foto.", true)}
+          ${evidenceSection()}`;
       }
 
       function valid() {
