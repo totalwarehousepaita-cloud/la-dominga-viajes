@@ -203,9 +203,19 @@
       .trip-actions {
         display: flex;
         justify-content: flex-end;
+        gap: 8px;
         margin-top: 14px;
         padding-top: 12px;
         border-top: 1px solid var(--line);
+      }
+      .report-btn {
+        border: 1px solid #b9d9c1;
+        border-radius: 11px;
+        background: #f0faf3;
+        color: #0b5a2b;
+        padding: 10px 13px;
+        font-weight: 800;
+        cursor: pointer;
       }
       .danger {
         border: 1px solid #edcaca;
@@ -864,6 +874,8 @@
     </div>
     <div id="overlay"></div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
     <script src="./config.js"></script>
     <script>
       const STEPS = [
@@ -1211,10 +1223,186 @@
               <div class="bar"><i style="width:${s.closed ? 100 : (st + 1) * 12.5}%"></i></div>
               <small>${s.closed ? "Viaje finalizado" : `${STEPS[st]} · Pulsa para ver los datos`}</small>
               <div class="trip-actions">
+                <button class="report-btn" onclick="downloadTripPdf('${esc(t)}', event)">⬇ Descargar PDF</button>
                 <button class="danger" onclick="deleteTrip(event,'${esc(t)}')">Eliminar viaje</button>
               </div>
             </div>`;
         }).join("");
+      }
+
+      function pdfSafe(value) {
+        if (value === null || value === undefined || value === "") return "Pendiente";
+        return String(value).replace(/[^\x20-\x7E\xA0-\xFF]/g, " ");
+      }
+
+      function pdfDate(value) {
+        if (!value) return "Pendiente";
+        try {
+          const d = new Date(value);
+          if (Number.isNaN(d.getTime())) return pdfSafe(value);
+          return d.toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
+        } catch (_) {
+          return pdfSafe(value);
+        }
+      }
+
+      async function downloadTripPdf(t, event) {
+        if (event) event.stopPropagation();
+        const row = await fetchTrip(t);
+        if (!row) return alert("No se pudo cargar el viaje para generar el PDF.");
+        createTripPdf(row.state, row.trip_code || "", t);
+      }
+
+      function createTripPdf(rawState, tripCode = "", t = "") {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+          alert("No se pudo cargar el generador de PDF. Recarga la pagina e intenta nuevamente.");
+          return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: "mm", format: "a4" });
+        const s = normalizeState(rawState);
+        const d = s.data || {};
+        const st = Number(s.step || 0);
+        const logs = Array.isArray(s.incidentLog) ? s.incidentLog : [];
+        const activity = Array.isArray(s.activityLog) ? s.activityLog : [];
+        const evidences = Array.isArray(d.evidences) ? d.evidences : [];
+        const code = tripCode || d.tripCode || (t ? "LD-" + t.slice(0, 4) : "Viaje");
+        const currentStage = s.closed ? "Cerrado" : (STEPS[st] || "Pendiente");
+        const progress = s.closed ? 100 : Math.min(100, Math.round((st + 1) * 12.5));
+        const now = new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
+
+        doc.setFillColor(7, 72, 35);
+        doc.rect(0, 0, 210, 28, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(17);
+        doc.text("05TEAM - Reporte de viaje", 14, 12);
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "normal");
+        doc.text(`${pdfSafe(code)} | Generado: ${pdfSafe(now)}`, 14, 20);
+
+        doc.setTextColor(20, 35, 25);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(13);
+        doc.text("Estado actual", 14, 38);
+
+        doc.autoTable({
+          startY: 42,
+          theme: "grid",
+          head: [["Viaje", "Etapa actual", "Avance", "Incidencias"]],
+          body: [[pdfSafe(code), pdfSafe(currentStage), `${progress}%`, String(logs.length)]],
+          styles: { fontSize: 9, cellPadding: 3 },
+          headStyles: { fillColor: [22, 102, 51] }
+        });
+
+        const general = [
+          ["Conductor", d.driver], ["Telefono", d.phone], ["Placa", d.plate], ["Auxiliar", d.helper],
+          ["Temp. inicial", d.temp0 ? `${d.temp0} C` : ""], ["Temp. carga", d.temp1 ? `${d.temp1} C` : ""],
+          ["Salida", pdfDate(d.depart)], ["Llegada Punto 1", pdfDate(d.arrive1)],
+          ["Temp. Punto 1", d.tempP1 ? `${d.tempP1} C` : ""], ["Llegada Punto 2", pdfDate(d.arrive2)],
+          ["Temp. Punto 2", d.tempP2 ? `${d.tempP2} C` : ""], ["Retorno", pdfDate(d.returnTime)],
+          ["Recibe jabas", d.receiver], ["Jabas devueltas", d.returnedPlant], ["Observacion", d.notes]
+        ].map(([a,b]) => [a, pdfSafe(b)]);
+
+        let y = doc.lastAutoTable.finalY + 9;
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Datos registrados", 14, y);
+        doc.autoTable({
+          startY: y + 3,
+          theme: "striped",
+          head: [["Campo", "Dato"]],
+          body: general,
+          styles: { fontSize: 8.5, cellPadding: 2.5 },
+          headStyles: { fillColor: [22, 102, 51] },
+          columnStyles: { 0: { cellWidth: 52 } }
+        });
+
+        y = doc.lastAutoTable.finalY + 9;
+        if (y > 245) { doc.addPage(); y = 18; }
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Avance por etapas", 14, y);
+        const stageRows = STEPS.map((name, i) => {
+          let status = "Pendiente";
+          if (s.closed || i < st) status = "Completada";
+          else if (i === st) status = "Actual";
+          return [String(i + 1), pdfSafe(name), status];
+        });
+        doc.autoTable({
+          startY: y + 3,
+          theme: "grid",
+          head: [["#", "Etapa", "Estado"]],
+          body: stageRows,
+          styles: { fontSize: 8.5, cellPadding: 2.2 },
+          headStyles: { fillColor: [22, 102, 51] },
+          columnStyles: { 0: { cellWidth: 12 }, 2: { cellWidth: 35 } }
+        });
+
+        y = doc.lastAutoTable.finalY + 9;
+        if (y > 235) { doc.addPage(); y = 18; }
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Incidencias", 14, y);
+        const incidentRows = logs.length ? logs.map(x => [
+          pdfSafe(x.time), pdfSafe(x.type), pdfSafe(x.severity), pdfSafe(x.description), pdfSafe(x.location || "-")
+        ]) : [["-", "Sin incidencias", "-", "No se han reportado incidencias.", "-"]];
+        doc.autoTable({
+          startY: y + 3,
+          theme: "grid",
+          head: [["Fecha", "Tipo", "Nivel", "Descripcion", "Ubicacion"]],
+          body: incidentRows,
+          styles: { fontSize: 7.5, cellPadding: 2 },
+          headStyles: { fillColor: [22, 102, 51] },
+          columnStyles: { 0: { cellWidth: 28 }, 1: { cellWidth: 28 }, 2: { cellWidth: 20 }, 3: { cellWidth: 70 }, 4: { cellWidth: 40 } }
+        });
+
+        y = doc.lastAutoTable.finalY + 9;
+        if (y > 235) { doc.addPage(); y = 18; }
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.text("Actividad reciente", 14, y);
+        const activityRows = activity.length ? activity.slice(0, 30).map(x => [
+          pdfSafe(x.time), pdfSafe(x.stage), pdfSafe(x.action), pdfSafe(x.detail)
+        ]) : [["-", "-", "Sin actividad", "Aun no hay registros de actividad."]];
+        doc.autoTable({
+          startY: y + 3,
+          theme: "striped",
+          head: [["Fecha", "Etapa", "Accion", "Detalle"]],
+          body: activityRows,
+          styles: { fontSize: 7.3, cellPadding: 2 },
+          headStyles: { fillColor: [22, 102, 51] }
+        });
+
+        if (evidences.length) {
+          y = doc.lastAutoTable.finalY + 9;
+          if (y > 235) { doc.addPage(); y = 18; }
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(12);
+          doc.text("Evidencias fotograficas", 14, y);
+          doc.autoTable({
+            startY: y + 3,
+            theme: "grid",
+            head: [["Etapa", "Fecha", "Enlace"]],
+            body: evidences.map(e => [pdfSafe(e.stage), pdfSafe(e.time), pdfSafe(e.url)]),
+            styles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" },
+            headStyles: { fillColor: [22, 102, 51] },
+            columnStyles: { 2: { cellWidth: 95 } }
+          });
+        }
+
+        const pages = doc.getNumberOfPages();
+        for (let i = 1; i <= pages; i++) {
+          doc.setPage(i);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(100, 100, 100);
+          doc.setFontSize(8);
+          doc.text(`05TEAM | ${pdfSafe(code)} | Pagina ${i} de ${pages}`, 14, 289);
+        }
+
+        const filename = `Reporte_${String(code).replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
+        doc.save(filename);
       }
 
       async function deleteTrip(event, t) {
@@ -1276,7 +1464,10 @@
                 <div><div class="live-badge">${s.closed ? "VIAJE CERRADO" : "ACTUALIZANDO EN VIVO"}</div>
                 <h2>${esc(d.driver || "Transportista pendiente")}</h2>
                 <p>${esc(code)} · ${esc(d.plate || "Placa pendiente")}</p></div>
-                <button class="secondary" onclick="liveToken='';$('overlay').innerHTML=''">×</button>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <button class="report-btn" onclick="downloadTripPdf('${esc(t)}', event)">⬇ PDF</button>
+                  <button class="secondary" onclick="liveToken='';$('overlay').innerHTML=''">×</button>
+                </div>
               </div>
               <div class="monitor-kpis">
                 <div><small>Avance</small><b>${s.closed ? 100 : Math.round((st + 1) * 12.5)}%</b></div>
