@@ -1836,24 +1836,27 @@
           </label>`).join("");
       }
 
-      function photo() {
-        return `<label class="photo">📷 Tomar foto de evidencia
-          <input type="file" accept="image/*" capture="environment" onchange="uploadEvidence(this)">
-        </label>`;
-      }
-
-      function evidenceSection() {
+      function stageEvidenceGallery() {
         const stageName = STEPS[step];
         const stageEvidence = (Array.isArray(data.evidences) ? data.evidences : [])
           .filter(e => (e.stage || "") === stageName);
-        const gallery = stageEvidence.length
+        return stageEvidence.length
           ? `<div class="doc-gallery">${stageEvidence.map((e,i) => `<div class="doc-thumb"><img src="${esc(e.url)}" alt="Evidencia ${i+1}"><small>✓ Evidencia ${i+1}<br>${esc(e.time || "Subida")}</small></div>`).join("")}</div>`
           : `<div style="font-size:12px;color:var(--muted);margin-top:8px">Aún no hay evidencias fotográficas en esta etapa.</div>`;
+      }
+
+      function photo() {
         return `<div class="doc-upload evidence-upload">
-          <div class="doc-upload-head"><span class="doc-upload-icon">📷</span><div><b>Evidencias fotográficas</b><small>Este apartado es independiente de los documentos. Toma fotos de la unidad, carga, entrega u otras evidencias necesarias.</small></div></div>
-          ${photo()}
-          ${gallery}
+          <div class="doc-upload-head"><span class="doc-upload-icon">📷</span><div><b>Evidencias fotográficas</b><small>Toma una o varias fotos. Cada imagen subida aparecerá inmediatamente aquí para que puedas comprobarla.</small></div></div>
+          <label class="photo">📷 Tomar foto de evidencia
+            <input type="file" accept="image/*" capture="environment" onchange="uploadEvidence(this)">
+          </label>
+          ${stageEvidenceGallery()}
         </div>`;
+      }
+
+      function evidenceSection() {
+        return photo();
       }
 
       function documentUpload(key, title, help, multiple = false) {
@@ -2080,11 +2083,27 @@
             <label class="field">Ubicación o referencia<input id="incLocation" placeholder="Ej. Panamericana Norte, km 725"></label>
             <label class="field">¿Qué ocurrió?<textarea id="incDescription" required placeholder="Describe el evento, cantidades afectadas y condición actual"></textarea></label>
             <label class="field">Acción tomada<textarea id="incAction" placeholder="Ej. Detuve la unidad y llamé al supervisor"></textarea></label>
-            <label class="photo">📷 Añadir evidencia fotográfica<input id="incPhoto" type="file" accept="image/*" capture="environment"></label>
+            <div class="doc-upload evidence-upload">
+              <div class="doc-upload-head"><span class="doc-upload-icon">📷</span><div><b>Evidencia de la incidencia</b><small>Toma una foto y verifica la vista previa antes de guardar la incidencia.</small></div></div>
+              <label class="photo">📷 Tomar foto de la incidencia<input id="incPhoto" type="file" accept="image/*" capture="environment" onchange="previewIncidentPhoto(this)"></label>
+              <div id="incPhotoPreview"><div style="font-size:12px;color:var(--muted);margin-top:8px">Aún no se ha tomado una foto para esta incidencia.</div></div>
+            </div>
             <div class="incident-info">Si existe riesgo para las personas o la carga, detén la operación en un lugar seguro y comunícate con el responsable.</div>
             <button class="primary">Guardar y notificar al dueño</button>
             <button type="button" class="secondary" onclick="$('overlay').innerHTML=''">Cancelar</button>
           </form></div>`;
+      }
+
+      function previewIncidentPhoto(input) {
+        const file = input.files?.[0];
+        const box = $("incPhotoPreview");
+        if (!box) return;
+        if (!file) {
+          box.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-top:8px">Aún no se ha tomado una foto para esta incidencia.</div>`;
+          return;
+        }
+        const url = URL.createObjectURL(file);
+        box.innerHTML = `<div class="doc-gallery"><div class="doc-thumb"><img src="${url}" alt="Vista previa de incidencia"><small>✓ Foto lista para subir<br>${esc(file.name)}</small></div></div>`;
       }
 
       async function saveIncident(event) {
