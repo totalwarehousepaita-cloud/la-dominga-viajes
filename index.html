@@ -1,0 +1,1575 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>Reporte de Viajes · La Dominga</title>
+    <style>
+      :root {
+        --deep: #075824;
+        --green: #25c43c;
+        --ink: #152219;
+        --muted: #6c786f;
+        --line: #dbe6dd;
+        --bg: #f2f7f3;
+        --warn: #fff6dc;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Arial, sans-serif;
+        padding-bottom: 88px;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      .top {
+        height: 74px;
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 max(18px, calc((100vw - 1000px) / 2));
+      }
+      .logo {
+        width: 44px;
+        height: 44px;
+        border-radius: 13px;
+        background: var(--deep);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+      }
+      .brand {
+        display: flex;
+        flex-direction: column;
+      }
+      .brand b {
+        color: var(--deep);
+      }
+      .brand small {
+        color: var(--muted);
+      }
+      .online {
+        margin-left: auto;
+        background: #e8f7eb;
+        color: var(--deep);
+        padding: 8px 11px;
+        border-radius: 99px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .wrap {
+        width: min(1000px, calc(100% - 30px));
+        margin: auto;
+      }
+      .demo {
+        margin-top: 16px;
+        border: 1px solid #ecd18d;
+        background: var(--warn);
+        padding: 11px 14px;
+        border-radius: 13px;
+        color: #6c4b00;
+        font-size: 13px;
+      }
+      .hero {
+        padding: 34px 0 23px;
+      }
+      .eyebrow {
+        color: #66806d;
+        font-size: 10px;
+        letter-spacing: 0.13em;
+        font-weight: 900;
+      }
+      .hero h1,
+      .wizard h1 {
+        color: var(--deep);
+        margin: 7px 0;
+        font-size: clamp(29px, 5vw, 42px);
+      }
+      .hero p {
+        color: var(--muted);
+        margin: 0;
+      }
+      .create {
+        background: linear-gradient(130deg, #075824, #073e1c);
+        color: #fff;
+        border-radius: 22px;
+        padding: 25px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 20px;
+        align-items: center;
+      }
+      .create h2 {
+        margin: 5px 0 7px;
+      }
+      .create p {
+        margin: 0;
+        color: #d4e7d8;
+        font-size: 14px;
+      }
+      .primary {
+        border: 0;
+        border-radius: 13px;
+        background: var(--green);
+        color: #073b18;
+        padding: 14px 17px;
+        font-weight: 900;
+        cursor: pointer;
+      }
+      .secondary {
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: #fff;
+        color: var(--deep);
+        padding: 13px 16px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 15px;
+      }
+      .metric {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 17px;
+        padding: 18px;
+      }
+      .metric span,
+      .metric small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .metric b {
+        display: block;
+        color: var(--deep);
+        font-size: 31px;
+        margin: 7px 0;
+      }
+      .section-title {
+        margin: 30px 0 12px;
+      }
+      .section-title h2 {
+        color: var(--deep);
+        margin: 5px 0;
+      }
+      .empty,
+      .trip {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 25px;
+        text-align: center;
+      }
+      .empty b,
+      .empty span {
+        display: block;
+      }
+      .empty span {
+        color: var(--muted);
+        font-size: 13px;
+        margin-top: 7px;
+      }
+      .trip {
+        text-align: left;
+        cursor: pointer;
+        width: 100%;
+      }
+      .trip b {
+        color: var(--deep);
+      }
+      .trip small {
+        display: block;
+        color: var(--muted);
+        margin: 5px 0;
+      }
+      .trip-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+      .danger {
+        border: 1px solid #edcaca;
+        border-radius: 11px;
+        background: #fff3f3;
+        color: #a52d2d;
+        padding: 10px 13px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .bar {
+        height: 6px;
+        background: #e5ede7;
+        border-radius: 9px;
+        overflow: hidden;
+        margin: 10px 0;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        background: var(--green);
+      }
+      .nav,
+      .actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-top: 1px solid var(--line);
+        padding: 11px;
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        z-index: 10;
+      }
+      .nav button {
+        border: 0;
+        background: none;
+        color: var(--deep);
+        font-weight: 800;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 35, 12, 0.58);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 30;
+      }
+      .sheet {
+        width: min(520px, 100%);
+        background: #fff;
+        border-radius: 24px 24px 0 0;
+        padding: 23px;
+        display: grid;
+        gap: 13px;
+      }
+      .sheet h2 {
+        color: var(--deep);
+        margin: 0;
+      }
+      .share {
+        padding: 13px;
+        background: #eaf8ed;
+        border: 1px solid #bde0c2;
+        border-radius: 13px;
+      }
+      .field {
+        display: block;
+        color: #637068;
+        font-size: 10px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 14px;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        display: block;
+        width: 100%;
+        margin-top: 6px;
+        border: 1px solid #cbd9ce;
+        border-radius: 12px;
+        padding: 13px;
+        color: var(--ink);
+        background: #fff;
+        text-transform: none;
+        letter-spacing: 0;
+        font-weight: 500;
+      }
+      .field textarea {
+        min-height: 85px;
+      }
+      .wizard {
+        width: min(700px, calc(100% - 28px));
+        margin: 27px auto;
+      }
+      .progress {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 4px;
+      }
+      .progress i {
+        height: 6px;
+        border-radius: 9px;
+        background: #dce7de;
+      }
+      .progress i.done {
+        background: var(--green);
+      }
+      .secure {
+        padding: 12px 14px;
+        border-radius: 13px;
+        background: #eaf7ec;
+        color: var(--deep);
+        font-size: 12px;
+        margin: 15px 0;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 20px;
+        margin-top: 17px;
+      }
+      .two {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 11px;
+      }
+      .check {
+        display: flex;
+        gap: 11px;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #edf2ee;
+        font-weight: 700;
+      }
+      .check input {
+        width: 23px;
+        height: 23px;
+        accent-color: var(--deep);
+      }
+      .check-copy {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 3px;
+      }
+      .check-copy b {
+        color: var(--ink);
+        font-size: 14px;
+      }
+      .check-copy small {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .check-status {
+        padding: 5px 8px;
+        border-radius: 99px;
+        background: #f0f3f1;
+        color: #78817b;
+        font-size: 9px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+      .check input:checked ~ .check-status {
+        background: #e5f7e8;
+        color: #11732a;
+      }
+      .section-intro {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        padding: 13px;
+        margin-bottom: 10px;
+        border-radius: 13px;
+        background: #f5f8f5;
+      }
+      .section-intro i {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        background: #e3f3e6;
+        font-style: normal;
+      }
+      .section-intro b,
+      .section-intro small {
+        display: block;
+      }
+      .section-intro small {
+        color: var(--muted);
+        margin-top: 3px;
+      }
+      .timeline {
+        position: relative;
+        margin-top: 20px;
+        padding-left: 19px;
+      }
+      .timeline:before {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 5px;
+        bottom: 5px;
+        width: 2px;
+        background: #dfe8e1;
+      }
+      .event {
+        position: relative;
+        padding: 0 0 17px 10px;
+      }
+      .event:before {
+        content: "";
+        position: absolute;
+        left: -18px;
+        top: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--green);
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px #b8d3bd;
+      }
+      .event small,
+      .event b,
+      .event span {
+        display: block;
+      }
+      .event small {
+        color: var(--muted);
+        font-size: 10px;
+      }
+      .event b {
+        color: var(--deep);
+        font-size: 13px;
+        margin: 3px 0;
+      }
+      .event span {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .live-badge {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        padding: 7px 10px;
+        border-radius: 99px;
+        background: #e7f7ea;
+        color: #14742a;
+        font-size: 10px;
+        font-weight: 900;
+      }
+      .live-badge:before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 0 4px rgba(37, 196, 60, 0.14);
+      }
+      .monitor-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .monitor-head h2 {
+        margin: 7px 0 3px;
+        color: var(--deep);
+      }
+      .monitor-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .monitor-kpis {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 18px 0;
+      }
+      .monitor-kpis div {
+        padding: 12px;
+        border-radius: 13px;
+        background: #f3f7f4;
+      }
+      .monitor-kpis small,
+      .monitor-kpis b {
+        display: block;
+      }
+      .monitor-kpis small {
+        font-size: 9px;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+      .monitor-kpis b {
+        margin-top: 5px;
+        color: var(--deep);
+      }
+      .stage-track {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 7px;
+        margin: 13px 0 20px;
+      }
+      .stage-box {
+        padding: 9px 6px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 9px;
+      }
+      .stage-box b {
+        display: block;
+        font-size: 13px;
+        margin-bottom: 3px;
+      }
+      .stage-box.done {
+        background: #eaf8ed;
+        border-color: #b9dfbf;
+        color: #11732a;
+      }
+      .stage-box.current {
+        background: #075824;
+        border-color: #075824;
+        color: #fff;
+      }
+      .monitor-section {
+        margin-top: 22px;
+      }
+      .monitor-section > h3 {
+        margin: 0 0 10px;
+        color: var(--deep);
+        font-size: 15px;
+      }
+      .activity-empty {
+        padding: 16px;
+        border: 1px dashed #bfd0c2;
+        border-radius: 12px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      @media (max-width: 440px) {
+        .monitor-kpis {
+          grid-template-columns: 1fr 1fr;
+        }
+        .stage-track {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .stamp,
+      .photo {
+        display: block;
+        width: 100%;
+        border: 1px solid #bcd5c0;
+        border-radius: 12px;
+        background: #eff8f0;
+        color: var(--deep);
+        padding: 14px;
+        text-align: center;
+        font-weight: 900;
+        margin-bottom: 14px;
+      }
+      .photo {
+        position: relative;
+      }
+      .photo input {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        width: 100%;
+      }
+      .notice {
+        padding: 12px;
+        border-radius: 12px;
+        background: var(--warn);
+        color: #704d00;
+        margin: 12px 0;
+      }
+      .summary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+      .summary div {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 11px;
+      }
+      .summary small {
+        display: block;
+        color: var(--muted);
+        font-size: 9px;
+        text-transform: uppercase;
+      }
+      .owner-detail {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 35, 12, 0.5);
+        display: flex;
+        justify-content: flex-end;
+        z-index: 40;
+      }
+      .panel {
+        width: min(430px, 100%);
+        height: 100%;
+        background: #fff;
+        padding: 22px;
+        overflow: auto;
+      }
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+      }
+      .panel-head h2 {
+        color: var(--deep);
+      }
+      .livegrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .livegrid div {
+        padding: 11px;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+      }
+      .livegrid small,
+      .livegrid b {
+        display: block;
+      }
+      .livegrid small {
+        color: var(--muted);
+        font-size: 9px;
+        text-transform: uppercase;
+      }
+      .incident-head {
+        display: flex;
+        gap: 13px;
+        align-items: center;
+      }
+      .incident-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 15px;
+        background: #fff0f0;
+        color: #b82c2c;
+        display: grid;
+        place-items: center;
+        font-size: 23px;
+      }
+      .incident-head h2 {
+        margin: 0;
+      }
+      .incident-head p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .severity {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .severity label {
+        cursor: pointer;
+      }
+      .severity input {
+        position: absolute;
+        opacity: 0;
+      }
+      .severity span {
+        display: block;
+        text-align: center;
+        padding: 11px 7px;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .severity input:checked + span {
+        border-color: #b82c2c;
+        background: #fff0f0;
+        color: #9b2020;
+      }
+      .incident-info {
+        padding: 11px 13px;
+        border-radius: 11px;
+        background: #f3f7f4;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .incident-success {
+        padding: 15px;
+        border: 1px solid #b7dfbe;
+        border-radius: 13px;
+        background: #eaf8ed;
+        color: var(--deep);
+      }
+      .incident-list {
+        margin-top: 18px;
+      }
+      .incident-item {
+        padding: 13px;
+        border-left: 4px solid #d13a3a;
+        background: #fff5f5;
+        border-radius: 0 12px 12px 0;
+        margin-top: 9px;
+      }
+      .incident-item small,
+      .incident-item b,
+      .incident-item span {
+        display: block;
+      }
+      .incident-item small,
+      .incident-item span {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .incident-item b {
+        margin: 4px 0;
+      }
+      .sheet .photo {
+        margin: 0;
+      }
+      .modal .sheet {
+        max-height: 94vh;
+        overflow: auto;
+      }
+      .hidden {
+        display: none !important;
+      }
+      @media (max-width: 620px) {
+        .create {
+          grid-template-columns: 1fr;
+        }
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+        .two,
+        .summary,
+        .livegrid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .actions {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
+        .actions .incident {
+          grid-column: 1/-1;
+        }
+        .create .primary {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="owner">
+      <header class="top">
+        <div class="logo">05</div>
+        <div class="brand">
+          <b>05TEAM</b><small>Control de operaciones</small>
+        </div>
+        <span class="online">● En línea</span>
+      </header>
+      <main class="wrap">
+        <div class="demo">
+          <b>Modo demostración.</b> Los datos se guardan solamente en este
+          navegador.
+        </div>
+        <section class="hero">
+          <div class="eyebrow">VISTA DEL DUEÑO</div>
+          <h1>Control de operaciones</h1>
+          <p>
+            Crea un viaje y observa cómo el transportista completa cada etapa.
+          </p>
+        </section>
+        <section class="create">
+          <div>
+            <div class="eyebrow" style="color: #b9edc1">NUEVA ASIGNACIÓN</div>
+            <h2>Crear viaje y enviar enlace</h2>
+            <p>
+              El enlace aparece inmediatamente. El transportista completa todos
+              sus datos.
+            </p>
+          </div>
+          <button class="primary" onclick="createTrip()">Crear viaje →</button>
+        </section>
+        <section class="metrics">
+          <div class="metric">
+            <span>Viajes activos</span><b id="activeCount">0</b
+            ><small id="activeText">Todavía no hay viajes</small>
+          </div>
+          <div class="metric">
+            <span>Etapa actual</span><b id="stageCount">0/8</b
+            ><small id="stageText">Sin actividad</small>
+          </div>
+          <div class="metric">
+            <span>Incidencias</span><b id="incidentCount">0</b
+            ><small>Reportadas por el transportista</small>
+          </div>
+        </section>
+        <div class="section-title">
+          <div class="eyebrow">SEGUIMIENTO EN VIVO</div>
+          <h2>Operaciones</h2>
+        </div>
+        <div id="tripList" class="empty">
+          <b>No hay viajes creados</b
+          ><span>El primer viaje aparecerá aquí.</span>
+        </div>
+      </main>
+      <nav class="nav">
+        <button>⌂ Resumen</button><button>▤ Viajes</button
+        ><button>⚠ Incidencias</button>
+      </nav>
+    </div>
+    <div id="wizard" class="hidden">
+      <header class="top">
+        <div class="logo">05</div>
+        <div class="brand">
+          <b>Portal del transportista</b
+          ><small id="tripCode">Viaje asignado</small>
+        </div>
+        <span class="online">Guardado automático</span>
+      </header>
+      <main class="wizard">
+        <div class="progress" id="progress"></div>
+        <div style="margin-top: 24px">
+          <div class="eyebrow" id="stepLabel"></div>
+          <h1 id="stepTitle"></h1>
+          <p style="color: var(--muted)">
+            Piura → Chiclayo → Piura · 156 tortas · 75 jabas · 0–5 °C
+          </p>
+        </div>
+        <div class="secure">
+          <b>Registro seguro del viaje</b><br />El responsable de la operación
+          puede observar el avance mientras completas los datos.
+        </div>
+        <div id="message" class="notice hidden"></div>
+        <section class="card" id="formCard"></section>
+      </main>
+      <div class="actions">
+        <button class="secondary incident" onclick="reportIncident()">
+          ⚠ Reportar incidencia</button
+        ><button class="secondary" onclick="backStep()">← Atrás</button
+        ><button class="primary" onclick="nextStep()" id="nextButton">
+          Continuar →
+        </button>
+      </div>
+    </div>
+    <div id="overlay"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./config.js"></script>
+    <script>
+      const STEPS = [
+        "Identificación",
+        "Preoperacional",
+        "Carga",
+        "Salida",
+        "Punto 1",
+        "Punto 2",
+        "Retorno",
+        "Cierre",
+      ];
+
+      const SB_URL = window.LA_DOMINGA_CONFIG?.SUPABASE_URL || "";
+      const SB_KEY = window.LA_DOMINGA_CONFIG?.SUPABASE_ANON_KEY || "";
+      const sb = (SB_URL && SB_KEY && window.supabase)
+        ? window.supabase.createClient(SB_URL, SB_KEY)
+        : null;
+
+      let token = new URLSearchParams(location.search).get("viaje") || "";
+      let step = 0, incidents = 0, incidentLog = [], activityLog = [];
+      let liveToken = "";
+      let realtimeChannel = null;
+      let ownerChannel = null;
+      let saveTimer = null;
+      let lastSavedJson = "";
+      let data = {
+        driver: "", phone: "", plate: "", helper: "",
+        temp0: "", temp1: "",
+        p1j: "37", p2j: "38", p1t: "78", p2t: "78",
+        depart: "", arrive1: "", tempP1: "", p1ret: "37",
+        arrive2: "", tempP2: "", p2ret: "38",
+        returnTime: "", returnedPlant: "75", receiver: "", notes: "",
+        evidences: []
+      };
+
+      const $ = (id) => document.getElementById(id);
+      const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[c]);
+
+      function configured() {
+        return !!sb;
+      }
+
+      function showConfigError() {
+        $("overlay").innerHTML = `
+          <div class="modal">
+            <div class="sheet">
+              <div class="eyebrow">CONFIGURACIÓN PENDIENTE</div>
+              <h2>Conecta Supabase para activar el sistema</h2>
+              <div class="notice">
+                Falta completar <b>config.js</b> con la URL y la clave pública (anon) de Supabase.
+              </div>
+              <div class="share">
+                Después de configurar Supabase, esta misma web permitirá crear viajes,
+                abrirlos desde otro teléfono y ver las actualizaciones en tiempo real.
+              </div>
+              <button class="secondary" onclick="$('overlay').innerHTML=''">Cerrar</button>
+            </div>
+          </div>`;
+      }
+
+      function emptyState() {
+        return {
+          data: { ...data },
+          step: 0,
+          incidents: 0,
+          incidentLog: [],
+          activityLog: [],
+          closed: false
+        };
+      }
+
+      function normalizeState(s) {
+        const state = s || {};
+        return {
+          data: { ...data, ...(state.data || {}) },
+          step: Number(state.step || 0),
+          incidents: Number(state.incidents || (state.incidentLog || []).length || 0),
+          incidentLog: Array.isArray(state.incidentLog) ? state.incidentLog : [],
+          activityLog: Array.isArray(state.activityLog) ? state.activityLog : [],
+          closed: !!state.closed
+        };
+      }
+
+      function applyState(s) {
+        const state = normalizeState(s);
+        data = state.data;
+        step = state.step;
+        incidents = state.incidents;
+        incidentLog = state.incidentLog;
+        activityLog = state.activityLog;
+      }
+
+      function currentState(extra = {}) {
+        return {
+          data,
+          step,
+          incidents,
+          incidentLog,
+          activityLog,
+          closed: !!extra.closed
+        };
+      }
+
+      async function fetchTrip(t) {
+        const { data: row, error } = await sb
+          .from("trips")
+          .select("*")
+          .eq("token", t)
+          .maybeSingle();
+        if (error) throw error;
+        return row;
+      }
+
+      async function saveNow(extra = {}) {
+        if (!token || !configured()) return;
+        const state = currentState(extra);
+        const serialized = JSON.stringify(state);
+        if (serialized === lastSavedJson) return;
+        lastSavedJson = serialized;
+        const { error } = await sb
+          .from("trips")
+          .update({ state, updated_at: new Date().toISOString() })
+          .eq("token", token);
+        if (error) {
+          lastSavedJson = "";
+          console.error(error);
+          showMessage("No se pudo guardar. Revisa la conexión e inténtalo nuevamente.");
+        }
+      }
+
+      function save(extra = {}) {
+        if (!token || !configured()) return;
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => saveNow(extra), 250);
+      }
+
+      function showMessage(text) {
+        if (!$("message")) return;
+        $("message").textContent = text;
+        $("message").classList.toggle("hidden", !text);
+      }
+
+      function logActivity(action, detail) {
+        activityLog.unshift({
+          action,
+          detail,
+          stage: STEPS[step],
+          time: new Date().toLocaleString("es-PE", {
+            dateStyle: "short", timeStyle: "short"
+          }),
+        });
+        activityLog = activityLog.slice(0, 100);
+        save();
+      }
+
+      function field(id) {
+        return `<label class="field">${id[1]}
+          <input id="${id[0]}" type="${id[2] || "text"}"
+            value="${esc(data[id[0]])}" placeholder="${id[3] || ""}"
+            oninput="data.${id[0]}=this.value;save()"
+            onchange="logActivity('Dato actualizado','${esc(id[1])}')">
+        </label>`;
+      }
+
+      function stamp(id) {
+        const now = new Date();
+        data[id] = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+          .toISOString().slice(0, 16);
+        logActivity("Hora registrada",
+          id.replace("arrive1", "Llegada al punto 1")
+            .replace("arrive2", "Llegada al punto 2")
+            .replace("depart", "Salida de planta")
+            .replace("returnTime", "Retorno a planta"));
+        render();
+      }
+
+      async function nextTripCode() {
+        const { data: rows, error } = await sb
+          .from("trips")
+          .select("trip_code")
+          .order("created_at", { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        let max = 0;
+        (rows || []).forEach(r => {
+          const m = String(r.trip_code || "").match(/LD-(\d+)/);
+          if (m) max = Math.max(max, Number(m[1]));
+        });
+        return "LD-" + String(max + 1).padStart(3, "0");
+      }
+
+      async function createTrip() {
+        if (!configured()) return showConfigError();
+        try {
+          const displayCode = await nextTripCode();
+          token = crypto.randomUUID().replaceAll("-", "").slice(0, 20).toUpperCase();
+          const state = emptyState();
+          state.data.tripCode = displayCode;
+          state.activityLog = [{
+            action: "Viaje creado",
+            detail: "Enlace generado por el dueño",
+            stage: "Asignación",
+            time: new Date().toLocaleString("es-PE", {
+              dateStyle: "short", timeStyle: "short"
+            })
+          }];
+          const { error } = await sb.from("trips").insert({
+            token,
+            trip_code: displayCode,
+            state
+          });
+          if (error) throw error;
+          const link = `${location.origin}${location.pathname}?viaje=${token}`;
+          showShare(link);
+          await renderOwner();
+        } catch (e) {
+          console.error(e);
+          alert("No se pudo crear el viaje. Verifica la configuración de Supabase.");
+        }
+      }
+
+      function showShare(link) {
+        $("overlay").innerHTML = `
+          <div class="modal"><div class="sheet">
+            <div class="eyebrow">VIAJE CREADO</div>
+            <h2>Enlace listo para enviar</h2>
+            <div class="share">El transportista completará su identificación, vehículo y operación desde este enlace.</div>
+            <label class="field">Enlace exclusivo
+              <input id="shareInput" value="${esc(link)}" readonly>
+            </label>
+            <button class="primary" onclick="copyShareLink()">Copiar enlace</button>
+            <button class="secondary" onclick="$('overlay').innerHTML=''">Cerrar</button>
+          </div></div>`;
+      }
+
+      async function copyShareLink() {
+        const el = $("shareInput");
+        try {
+          await navigator.clipboard.writeText(el.value);
+        } catch (_) {
+          el.select();
+          document.execCommand("copy");
+        }
+        const btn = el.closest(".sheet").querySelector(".primary");
+        btn.textContent = "✓ Enlace copiado";
+      }
+
+      async function load() {
+        if (!configured()) {
+          if (token) {
+            $("owner").classList.add("hidden");
+            $("wizard").classList.remove("hidden");
+            $("formCard").innerHTML = '<div class="notice">Configura Supabase en <b>config.js</b> para abrir este viaje.</div>';
+          } else {
+            await renderOwner();
+          }
+          return;
+        }
+        if (token) {
+          try {
+            const row = await fetchTrip(token);
+            if (!row) {
+              $("owner").classList.add("hidden");
+              $("wizard").classList.remove("hidden");
+              $("formCard").innerHTML = '<div class="notice">Este enlace de viaje no existe o fue eliminado.</div>';
+              return;
+            }
+            applyState(row.state);
+            lastSavedJson = JSON.stringify(normalizeState(row.state));
+            $("owner").classList.add("hidden");
+            $("wizard").classList.remove("hidden");
+            render();
+            subscribeTrip(token);
+          } catch (e) {
+            console.error(e);
+            $("formCard").innerHTML = '<div class="notice">No se pudo cargar el viaje.</div>';
+          }
+        } else {
+          await renderOwner();
+          subscribeOwner();
+        }
+      }
+
+      async function renderOwner() {
+        if (!configured()) {
+          $("activeCount").textContent = "0";
+          $("activeText").textContent = "Configura Supabase";
+          $("stageCount").textContent = "0/8";
+          $("stageText").textContent = "Sin conexión";
+          $("incidentCount").textContent = "0";
+          $("tripList").className = "empty";
+          $("tripList").innerHTML = '<b>Sistema pendiente de conexión</b><span>Completa config.js y ejecuta supabase.sql.</span>';
+          return;
+        }
+
+        const { data: rows, error } = await sb
+          .from("trips")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error) {
+          console.error(error);
+          $("tripList").className = "empty";
+          $("tripList").innerHTML = '<b>No se pudieron cargar los viajes</b><span>Revisa la conexión con Supabase.</span>';
+          return;
+        }
+
+        const trips = (rows || []).map(r => ({ ...r, s: normalizeState(r.state) }));
+        const activeTrips = trips.filter(x => !x.s.closed);
+        const totalIncidents = trips.reduce((a, x) => a + (x.s.incidentLog || []).length, 0);
+        const mostRecent = trips[0];
+
+        $("activeCount").textContent = String(activeTrips.length);
+        $("activeText").textContent = activeTrips.length
+          ? "Operaciones en curso"
+          : (trips.length ? "Sin viajes activos" : "Todavía no hay viajes");
+        $("incidentCount").textContent = String(totalIncidents);
+
+        if (mostRecent) {
+          const st = mostRecent.s.step || 0;
+          $("stageCount").textContent = `${st + 1}/8`;
+          $("stageText").textContent = STEPS[st];
+        } else {
+          $("stageCount").textContent = "0/8";
+          $("stageText").textContent = "Sin actividad";
+        }
+
+        if (!trips.length) {
+          $("tripList").className = "empty";
+          $("tripList").innerHTML = "<b>No hay viajes creados</b><span>El primer viaje aparecerá aquí.</span>";
+          return;
+        }
+
+        $("tripList").className = "";
+        $("tripList").innerHTML = trips.map(({ token: t, trip_code, s }) => {
+          const d = s.data || {};
+          const st = s.step || 0;
+          const status = s.closed ? "CERRADO" : STEPS[st];
+          return `
+            <div class="trip" onclick="openTripLive('${esc(t)}')"
+                 style="margin-bottom:12px">
+              <b>${esc(d.driver || "Transportista pendiente")}</b>
+              <small>${esc(trip_code || d.tripCode || "Viaje")} · ${esc(d.plate || "Sin placa")} · ${esc(status)}</small>
+              <div class="bar"><i style="width:${s.closed ? 100 : (st + 1) * 12.5}%"></i></div>
+              <small>${s.closed ? "Viaje finalizado" : `${STEPS[st]} · Pulsa para ver los datos`}</small>
+              <div class="trip-actions">
+                <button class="danger" onclick="deleteTrip(event,'${esc(t)}')">Eliminar viaje</button>
+              </div>
+            </div>`;
+        }).join("");
+      }
+
+      async function deleteTrip(event, t) {
+        event.stopPropagation();
+        if (!confirm("¿Eliminar este viaje y todos sus datos guardados? Esta acción no se puede deshacer.")) return;
+        const { error } = await sb.from("trips").delete().eq("token", t);
+        if (error) return alert("No se pudo eliminar el viaje.");
+        await renderOwner();
+      }
+
+      async function openTripLive(t) {
+        const row = await fetchTrip(t);
+        if (row) showLive(row.state, t, row.trip_code);
+      }
+
+      function showLive(rawState, t, tripCode = "") {
+        const s = normalizeState(rawState);
+        const d = s.data || {}, st = s.step || 0;
+        const events = s.activityLog || [], logs = s.incidentLog || [];
+        liveToken = t;
+        const code = tripCode || d.tripCode || "LD-" + t.slice(0, 4);
+
+        const rows = [
+          ["Conductor", d.driver], ["Teléfono", d.phone], ["Placa", d.plate],
+          ["Auxiliar", d.helper], ["Temperatura inicial", d.temp0 && d.temp0 + " °C"],
+          ["Temperatura carga", d.temp1 && d.temp1 + " °C"], ["Salida", d.depart],
+          ["Punto 1", d.arrive1], ["Punto 2", d.arrive2], ["Retorno", d.returnTime]
+        ];
+
+        const stages = STEPS.map((name, i) =>
+          `<div class="stage-box ${i < st || s.closed ? "done" : i === st ? "current" : ""}">
+             <b>${i < st || s.closed ? "✓" : i + 1}</b>${name}
+           </div>`).join("");
+
+        const activity = events.length
+          ? events.slice(0, 30).map(x =>
+              `<div class="event"><small>${esc(x.time)} · ${esc(x.stage)}</small><b>${esc(x.action)}</b><span>${esc(x.detail)}</span></div>`).join("")
+          : '<div class="activity-empty">Esperando la primera actualización del transportista.</div>';
+
+        const incidentHtml = logs.length
+          ? logs.map(x =>
+              `<div class="incident-item"><small>${esc(x.time)} · ${esc(x.severity)}</small><b>${esc(x.type)}</b><span>${esc(x.description)}</span>${x.location ? `<span>📍 ${esc(x.location)}</span>` : ""}</div>`).join("")
+          : '<div class="incident-info">Sin incidencias reportadas.</div>';
+
+        const evidenceHtml = (d.evidences || []).length
+          ? `<div class="monitor-section"><h3>Evidencias</h3>
+              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+                ${(d.evidences || []).slice().reverse().map(e =>
+                  `<a href="${esc(e.url)}" target="_blank" style="text-decoration:none">
+                    <div class="incident-info"><b>📷 ${esc(e.stage || "Evidencia")}</b><br>${esc(e.time || "")}</div>
+                  </a>`).join("")}
+              </div></div>`
+          : "";
+
+        $("overlay").innerHTML = `
+          <div class="owner-detail" onclick="liveToken='';$('overlay').innerHTML=''">
+            <aside class="panel" onclick="event.stopPropagation()">
+              <div class="monitor-head">
+                <div><div class="live-badge">${s.closed ? "VIAJE CERRADO" : "ACTUALIZANDO EN VIVO"}</div>
+                <h2>${esc(d.driver || "Transportista pendiente")}</h2>
+                <p>${esc(code)} · ${esc(d.plate || "Placa pendiente")}</p></div>
+                <button class="secondary" onclick="liveToken='';$('overlay').innerHTML=''">×</button>
+              </div>
+              <div class="monitor-kpis">
+                <div><small>Avance</small><b>${s.closed ? 100 : Math.round((st + 1) * 12.5)}%</b></div>
+                <div><small>Etapa</small><b>${s.closed ? "Cerrado" : esc(STEPS[st])}</b></div>
+                <div><small>Incidencias</small><b>${logs.length}</b></div>
+              </div>
+              <div class="stage-track">${stages}</div>
+              <div class="monitor-section"><h3>Datos recibidos</h3>
+                <div class="livegrid">${rows.map(r => `<div><small>${r[0]}</small><b>${esc(r[1] || "Pendiente")}</b></div>`).join("")}</div>
+              </div>
+              <div class="monitor-section"><h3>Incidencias</h3>${incidentHtml}</div>
+              ${evidenceHtml}
+              <div class="monitor-section"><h3>Actividad reciente</h3><div class="timeline">${activity}</div></div>
+            </aside>
+          </div>`;
+      }
+
+      function subscribeOwner() {
+        if (!configured()) return;
+        if (ownerChannel) sb.removeChannel(ownerChannel);
+        ownerChannel = sb.channel("owner-trips")
+          .on("postgres_changes", { event: "*", schema: "public", table: "trips" }, async payload => {
+            await renderOwner();
+            if (liveToken) {
+              const row = await fetchTrip(liveToken);
+              if (row) showLive(row.state, liveToken, row.trip_code);
+            }
+          }).subscribe();
+      }
+
+      function subscribeTrip(t) {
+        if (!configured()) return;
+        if (realtimeChannel) sb.removeChannel(realtimeChannel);
+        realtimeChannel = sb.channel("trip-" + t)
+          .on("postgres_changes", {
+            event: "UPDATE", schema: "public", table: "trips", filter: `token=eq.${t}`
+          }, payload => {
+            // Avoid overwriting active inputs unless update came from another client and state differs.
+            const incoming = normalizeState(payload.new.state);
+            const incomingJson = JSON.stringify(incoming);
+            if (incomingJson !== lastSavedJson) {
+              applyState(incoming);
+              lastSavedJson = incomingJson;
+              render();
+            }
+          }).subscribe();
+      }
+
+      function checks(items, start) {
+        return items.map((x, i) =>
+          `<label class="check">
+            <input type="checkbox" id="c${start + i}" ${data["c" + (start + i)] ? "checked" : ""}
+              onchange="data.c${start + i}=this.checked;this.parentNode.querySelector('.check-status').textContent=this.checked?'Conforme':'Pendiente';logActivity(this.checked?'Control conforme':'Control desmarcado','${esc(x)}')">
+            <span class="check-copy"><b>${x}</b><small>Verifica físicamente antes de marcar como conforme.</small></span>
+            <span class="check-status">${data["c" + (start + i)] ? "Conforme" : "Pendiente"}</span>
+          </label>`).join("");
+      }
+
+      function photo() {
+        return `<label class="photo">📷 Añadir evidencia fotográfica
+          <input type="file" accept="image/*" capture="environment" onchange="uploadEvidence(this)">
+        </label>`;
+      }
+
+      async function uploadEvidence(input) {
+        const file = input.files?.[0];
+        if (!file || !configured()) return;
+        const label = input.closest(".photo");
+        const oldText = label.childNodes[0]?.textContent || "";
+        try {
+          label.childNodes[0].textContent = "⏳ Subiendo evidencia ";
+          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const path = `${token}/${Date.now()}_${safeName}`;
+          const { error: upErr } = await sb.storage.from("evidencias").upload(path, file, {
+            cacheControl: "3600", upsert: false
+          });
+          if (upErr) throw upErr;
+          const { data: pub } = sb.storage.from("evidencias").getPublicUrl(path);
+          data.evidences = Array.isArray(data.evidences) ? data.evidences : [];
+          data.evidences.push({
+            url: pub.publicUrl,
+            path,
+            stage: STEPS[step],
+            time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
+          });
+          logActivity("Evidencia agregada", STEPS[step]);
+          await saveNow();
+          label.childNodes[0].textContent = "✓ Evidencia subida ";
+        } catch (e) {
+          console.error(e);
+          label.childNodes[0].textContent = "⚠ No se pudo subir. Reintentar ";
+        }
+      }
+
+      function render() {
+        if (!token) return;
+        $("tripCode").textContent = data.tripCode || "Viaje " + token.slice(0, 4);
+        $("progress").innerHTML = STEPS.map((_, i) => `<i class="${i <= step ? "done" : ""}"></i>`).join("");
+        $("stepLabel").textContent = `PASO ${step + 1} DE 8 · ${STEPS[step]}`;
+        $("stepTitle").textContent = [
+          "Identificación del transportista", "Unidad lista para cargar",
+          "Carga, estiba y seguridad", "Liberación de salida",
+          "Entrega Plaza Vea · P1", "Entrega Plaza Vea · P2",
+          "Regreso a La Dominga", "Resumen y cierre"
+        ][step];
+        $("nextButton").textContent = step === 7 ? "Cerrar viaje ✓" : "Continuar →";
+
+        let h = "";
+        if (step === 0)
+          h = field(["driver","Nombre completo del conductor","text","Nombres y apellidos"]) +
+              `<div class="two">${field(["phone","Teléfono","tel","999 999 999"])}${field(["plate","Placa","text","ABC-123"])}</div>` +
+              field(["helper","Auxiliar (opcional)"]);
+
+        if (step === 1)
+          h = '<div class="section-intro"><i>✓</i><div><b>Inspección preoperacional</b><small>Revisa cada punto con la unidad detenida y en condiciones seguras.</small></div></div>' +
+              checks(["Furgón limpio y sin olores","Refrigeración operativa","Carnets de sanidad vigentes","EPP completo","Elementos de seguridad disponibles","Extintor vigente"],1) +
+              field(["temp0","Temperatura antes de cargar (°C)","number"]) + photo();
+
+        if (step === 2)
+          h = '<div class="section-intro"><i>▦</i><div><b>Control de carga</b><small>Confirma cantidades, temperatura y aseguramiento antes de liberar la unidad.</small></div></div>' +
+              `<div class="two">${field(["p1j","Jabas P1","number"])}${field(["p2j","Jabas P2","number"])}${field(["p1t","Tortas P1","number"])}${field(["p2t","Tortas P2","number"])}</div>` +
+              field(["temp1","Temperatura al cerrar (°C)","number"]) +
+              checks(["Estiba estable","Trincado sin daños","Cantidad coincide con despacho"],7) + photo();
+
+        if (step === 3)
+          h = `<button class="stamp" onclick="stamp('depart')">◷ Usar fecha y hora actual</button>${field(["depart","Fecha y hora de salida","datetime-local"])}`;
+
+        if (step === 4) h = delivery("1");
+        if (step === 5) h = delivery("2");
+
+        if (step === 6)
+          h = `<button class="stamp" onclick="stamp('returnTime')">🏁 Usar fecha y hora actual</button>
+               ${field(["returnTime","Fecha y hora de retorno","datetime-local"])}
+               ${field(["returnedPlant","Jabas devueltas","number"])}
+               ${field(["receiver","Recibe las jabas"])}
+               ${field(["notes","Observación"])}${photo()}`;
+
+        if (step === 7) {
+          let rows = [
+            ["Conductor",data.driver],["Placa",data.plate],["Salida",data.depart],
+            ["Punto 1",data.arrive1],["Punto 2",data.arrive2],["Retorno",data.returnTime],
+            ["Incidencias",incidents]
+          ];
+          h = '<div class="summary">' + rows.map(r =>
+            `<div><small>${r[0]}</small><b>${esc(r[1] || "—")}</b></div>`).join("") + "</div>";
+        }
+
+        $("formCard").innerHTML = h;
+      }
+
+      function delivery(n) {
+        return `<button class="stamp" onclick="stamp('arrive${n}')">📍 Usar fecha y hora actual</button>
+          ${field(["arrive" + n,"Fecha y hora de llegada","datetime-local"])}
+          ${field(["tempP" + n,"Temperatura (°C)","number"])}
+          ${field(["p" + n + "ret","Jabas recuperadas","number"])}
+          ${photo()}`;
+      }
+
+      function valid() {
+        let m = "";
+        if (step === 0 && (!data.driver || !data.phone || !data.plate))
+          m = "Completa conductor, teléfono y placa.";
+        if (step === 1 && (!data.temp0 || [1,2,3,4,5,6].some(n => !data["c"+n])))
+          m = "Completa todos los controles y la temperatura.";
+        if (step === 2 && (!data.temp1 || [7,8,9].some(n => !data["c"+n])))
+          m = "Completa los controles de carga y la temperatura.";
+        if (step === 3 && !data.depart) m = "Registra la salida.";
+        if (step === 4 && (!data.arrive1 || !data.tempP1)) m = "Registra llegada y temperatura del punto 1.";
+        if (step === 5 && (!data.arrive2 || !data.tempP2)) m = "Registra llegada y temperatura del punto 2.";
+        if (step === 6 && (!data.returnTime || !data.receiver)) m = "Registra el retorno y quién recibe.";
+        showMessage(m);
+        return !m;
+      }
+
+      async function nextStep() {
+        if (!valid()) return;
+        if (step < 7) {
+          const completed = STEPS[step];
+          step++;
+          activityLog.unshift({
+            action: "Etapa completada",
+            detail: `${completed} → ${STEPS[step]}`,
+            stage: STEPS[step],
+            time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
+          });
+          await saveNow();
+          render();
+          scrollTo(0,0);
+        } else {
+          activityLog.unshift({
+            action: "Viaje cerrado",
+            detail: "El transportista confirmó el cierre del registro",
+            stage: "Cierre",
+            time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
+          });
+          await saveNow({ closed: true });
+          alert("Viaje cerrado correctamente.");
+          location.reload();
+        }
+      }
+
+      function backStep() {
+        if (step > 0) {
+          step--;
+          save();
+          render();
+        } else history.back();
+      }
+
+      function reportIncident() {
+        $("overlay").innerHTML = `
+          <div class="modal"><form class="sheet" onsubmit="saveIncident(event)">
+            <div class="incident-head"><div class="incident-icon">⚠</div>
+              <div><h2>Reportar incidencia</h2><p>Informa lo ocurrido con claridad. El dueño podrá verlo de inmediato.</p></div>
+            </div>
+            <label class="field">Tipo de incidencia<select id="incType" required>
+              <option value="">Selecciona una opción</option>
+              <option>Temperatura fuera de rango</option><option>Daño de producto o jaba</option>
+              <option>Diferencia de cantidad</option><option>Falla del vehículo o refrigeración</option>
+              <option>Demora, tráfico o acceso</option><option>Rechazo en punto de entrega</option>
+              <option>Accidente o seguridad</option><option>Otro</option>
+            </select></label>
+            <div class="field">Nivel de urgencia<div class="severity">
+              <label><input type="radio" name="severity" value="Baja" checked><span>Baja</span></label>
+              <label><input type="radio" name="severity" value="Media"><span>Media</span></label>
+              <label><input type="radio" name="severity" value="Crítica"><span>Crítica</span></label>
+            </div></div>
+            <label class="field">Ubicación o referencia<input id="incLocation" placeholder="Ej. Panamericana Norte, km 725"></label>
+            <label class="field">¿Qué ocurrió?<textarea id="incDescription" required placeholder="Describe el evento, cantidades afectadas y condición actual"></textarea></label>
+            <label class="field">Acción tomada<textarea id="incAction" placeholder="Ej. Detuve la unidad y llamé al supervisor"></textarea></label>
+            <label class="photo">📷 Añadir evidencia fotográfica<input id="incPhoto" type="file" accept="image/*" capture="environment"></label>
+            <div class="incident-info">Si existe riesgo para las personas o la carga, detén la operación en un lugar seguro y comunícate con el responsable.</div>
+            <button class="primary">Guardar y notificar al dueño</button>
+            <button type="button" class="secondary" onclick="$('overlay').innerHTML=''">Cancelar</button>
+          </form></div>`;
+      }
+
+      async function saveIncident(event) {
+        event.preventDefault();
+        const type = $("incType").value;
+        const description = $("incDescription").value.trim();
+        if (!type || !description) return;
+        const severity = document.querySelector('input[name="severity"]:checked').value;
+        const item = {
+          type, severity, description,
+          location: $("incLocation").value.trim(),
+          action: $("incAction").value.trim(),
+          stage: STEPS[step],
+          time: new Date().toLocaleString("es-PE", { dateStyle:"short", timeStyle:"short" })
+        };
+
+        incidentLog.push(item);
+        incidents = incidentLog.length;
+        data.lastIncident = description;
+
+        const incFile = $("incPhoto")?.files?.[0];
+        if (incFile) {
+          try {
+            const safeName = incFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const path = `${token}/incidencias/${Date.now()}_${safeName}`;
+            const { error: upErr } = await sb.storage.from("evidencias").upload(path, incFile, { upsert:false });
+            if (!upErr) {
+              const { data: pub } = sb.storage.from("evidencias").getPublicUrl(path);
+              item.evidenceUrl = pub.publicUrl;
+              data.evidences = Array.isArray(data.evidences) ? data.evidences : [];
+              data.evidences.push({
+                url: pub.publicUrl, path, stage: "Incidencia · " + STEPS[step], time: item.time
+              });
+            }
+          } catch (e) { console.error(e); }
+        }
+
+        activityLog.unshift({
+          action: "Incidencia reportada",
+          detail: severity + " · " + type,
+          stage: STEPS[step],
+          time: item.time
+        });
+
+        await saveNow();
+        $("overlay").innerHTML = `
+          <div class="modal"><div class="sheet">
+            <div class="incident-success"><b>✓ Incidencia registrada</b><br>El reporte quedó asociado al viaje y ya está disponible para el dueño.</div>
+            <button class="primary" onclick="$('overlay').innerHTML=''">Continuar con el viaje</button>
+          </div></div>`;
+      }
+
+      load();
+    </script>
+  </body>
+</html>

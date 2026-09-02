@@ -1,0 +1,12 @@
+ANTES DE SUBIR A GITHUB
+
+1) Crea un proyecto en Supabase.
+2) Ejecuta supabase.sql en SQL Editor.
+3) Edita config.js y pega:
+   - SUPABASE_URL
+   - SUPABASE_ANON_KEY
+4) Sube TODO a GitHub.
+5) Activa GitHub Pages.
+6) Prueba el enlace del viaje desde otro dispositivo.
+
+IMPORTANTE: nunca pongas la service_role key en el frontend.
