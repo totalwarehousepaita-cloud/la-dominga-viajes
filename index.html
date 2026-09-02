@@ -597,6 +597,58 @@
         opacity: 0;
         width: 100%;
       }
+      .doc-upload {
+        border: 1px solid #c8dccb;
+        border-radius: 15px;
+        background: #fbfdfb;
+        padding: 14px;
+        margin: 14px 0;
+      }
+      .doc-upload-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 11px;
+      }
+      .doc-upload-icon {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 11px;
+        background: #e8f7eb;
+        color: #075824;
+        font-size: 19px;
+        flex: 0 0 auto;
+      }
+      .doc-upload-head b { display:block; color:var(--deep); font-size:14px; }
+      .doc-upload-head small { display:block; color:var(--muted); margin-top:3px; line-height:1.35; }
+      .doc-upload .photo { margin: 0; background:#f0f8f1; }
+      .doc-status {
+        display:flex;
+        align-items:center;
+        gap:10px;
+        margin-top:10px;
+        padding:10px;
+        border-radius:11px;
+        background:#eaf8ed;
+        border:1px solid #b9dfbf;
+      }
+      .doc-status img {
+        width:58px;
+        height:58px;
+        object-fit:cover;
+        border-radius:9px;
+        border:1px solid #c8dccb;
+        background:#fff;
+      }
+      .doc-status div { min-width:0; flex:1; }
+      .doc-status b { display:block; color:#075824; font-size:12px; }
+      .doc-status small { display:block; color:var(--muted); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .doc-gallery { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:10px; }
+      .doc-thumb { border:1px solid #d7e5da; background:#fff; border-radius:10px; padding:7px; }
+      .doc-thumb img { width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:7px; display:block; }
+      .doc-thumb small { display:block; margin-top:5px; color:var(--muted); font-size:10px; }
       .notice {
         padding: 12px;
         border-radius: 12px;
@@ -997,6 +1049,9 @@
         depart: "", arrive1: "", tempP1: "", p1ret: "37",
         arrive2: "", tempP2: "", p2ret: "38",
         returnTime: "", returnedPlant: "75", receiver: "", notes: "",
+        departureDocument: null,
+        receptionDocument1: null, receptionDocument2: null,
+        signedGuides1: [], signedGuides2: [],
         evidences: []
       };
 
@@ -1403,6 +1458,13 @@
         const logs = Array.isArray(s.incidentLog) ? s.incidentLog : [];
         const activity = Array.isArray(s.activityLog) ? s.activityLog : [];
         const evidences = Array.isArray(d.evidences) ? d.evidences : [];
+        const specialDocuments = [
+          ...(d.departureDocument ? [{...d.departureDocument, label:"Documento de salida"}] : []),
+          ...(d.receptionDocument1 ? [{...d.receptionDocument1, label:"Documento de recepción · Punto 1"}] : []),
+          ...((Array.isArray(d.signedGuides1) ? d.signedGuides1 : []).map(x => ({...x, label:"Guía firmada · Punto 1"}))),
+          ...(d.receptionDocument2 ? [{...d.receptionDocument2, label:"Documento de recepción · Punto 2"}] : []),
+          ...((Array.isArray(d.signedGuides2) ? d.signedGuides2 : []).map(x => ({...x, label:"Guía firmada · Punto 2"})))
+        ];
         const code = tripCode || d.tripCode || (t ? "LD-" + t.slice(0, 4) : "Viaje");
         const currentStage = s.closed ? "Cerrado" : (STEPS[st] || "Pendiente");
         const progress = s.closed ? 100 : Math.min(100, Math.round((st + 1) * 12.5));
@@ -1521,6 +1583,45 @@
           styles: { fontSize: 7.3, cellPadding: 2 },
           headStyles: { fillColor: [22, 102, 51] }
         });
+
+        if (specialDocuments.length) {
+          y = doc.lastAutoTable.finalY + 9;
+          if (y > 235) { doc.addPage(); y = 18; }
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(12);
+          doc.setTextColor(20, 35, 25);
+          doc.text("Documentos operativos", 14, y);
+          y += 7;
+          for (let i = 0; i < specialDocuments.length; i++) {
+            const e = specialDocuments[i] || {};
+            const loaded = e.url ? await imageUrlToJpegData(e.url) : null;
+            if (y > 245) { doc.addPage(); y = 18; }
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(9.5);
+            doc.setTextColor(20, 35, 25);
+            doc.text(pdfSafe(e.label || e.title || "Documento"), 14, y);
+            y += 5;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(90, 90, 90);
+            doc.text(pdfSafe(e.time || "Fecha no registrada"), 14, y);
+            y += 4;
+            if (loaded) {
+              const maxW = 182, maxH = 110;
+              const ratio = Math.min(maxW / loaded.width, maxH / loaded.height);
+              const imgW = loaded.width * ratio, imgH = loaded.height * ratio;
+              if (y + imgH > 278) { doc.addPage(); y = 18; }
+              const x = 14 + (182 - imgW) / 2;
+              doc.addImage(loaded.data, "JPEG", x, y, imgW, imgH, undefined, "FAST");
+              y += imgH + 9;
+            } else {
+              doc.setTextColor(150, 70, 70);
+              doc.setFontSize(8);
+              doc.text("No se pudo cargar este documento en el reporte.", 14, y + 3);
+              y += 12;
+            }
+          }
+        }
 
         if (evidences.length) {
           y = doc.lastAutoTable.finalY + 9;
@@ -1652,6 +1753,19 @@
               </div></div>`
           : "";
 
+        const specialDocs = [
+          ...(d.departureDocument ? [{...d.departureDocument, label:"Documento de salida"}] : []),
+          ...(d.receptionDocument1 ? [{...d.receptionDocument1, label:"Documento de recepción · Punto 1"}] : []),
+          ...((Array.isArray(d.signedGuides1) ? d.signedGuides1 : []).map(x => ({...x, label:"Guía firmada · Punto 1"}))),
+          ...(d.receptionDocument2 ? [{...d.receptionDocument2, label:"Documento de recepción · Punto 2"}] : []),
+          ...((Array.isArray(d.signedGuides2) ? d.signedGuides2 : []).map(x => ({...x, label:"Guía firmada · Punto 2"})))
+        ];
+        const documentsHtml = specialDocs.length
+          ? `<div class="monitor-section"><h3>Documentos operativos</h3><div class="doc-gallery">${specialDocs.map(x =>
+              `<a class="doc-thumb" href="${esc(x.url)}" target="_blank" style="text-decoration:none"><img src="${esc(x.url)}" alt="${esc(x.label)}"><small><b>${esc(x.label)}</b><br>${esc(x.time || "")}</small></a>`
+            ).join("")}</div></div>`
+          : "";
+
         $("overlay").innerHTML = `
           <div class="owner-detail" onclick="liveToken='';$('overlay').innerHTML=''">
             <aside class="panel" onclick="event.stopPropagation()">
@@ -1674,6 +1788,7 @@
                 <div class="livegrid">${rows.map(r => `<div><small>${r[0]}</small><b>${esc(r[1] || "Pendiente")}</b></div>`).join("")}</div>
               </div>
               <div class="monitor-section"><h3>Incidencias</h3>${incidentHtml}</div>
+              ${documentsHtml}
               ${evidenceHtml}
               <div class="monitor-section"><h3>Actividad reciente</h3><div class="timeline">${activity}</div></div>
             </aside>
@@ -1725,6 +1840,55 @@
         return `<label class="photo">📷 Añadir evidencia fotográfica
           <input type="file" accept="image/*" capture="environment" onchange="uploadEvidence(this)">
         </label>`;
+      }
+
+      function documentUpload(key, title, help, multiple = false) {
+        const value = data[key];
+        const docs = multiple ? (Array.isArray(value) ? value : []) : (value ? [value] : []);
+        const status = docs.length ? (multiple
+          ? `<div class="doc-gallery">${docs.map((d,i) => `<div class="doc-thumb"><img src="${esc(d.url)}" alt="${esc(title)} ${i+1}"><small>✓ ${esc(d.time || "Subido")}</small></div>`).join("")}</div>`
+          : `<div class="doc-status"><img src="${esc(docs[0].url)}" alt="${esc(title)}"><div><b>✓ Documento subido correctamente</b><small>${esc(docs[0].name || title)} · ${esc(docs[0].time || "")}</small></div></div>`) : "";
+        const buttonText = multiple
+          ? (docs.length ? `＋ Agregar otra foto (${docs.length} subida${docs.length === 1 ? "" : "s"})` : "📷 Subir foto de guía firmada")
+          : (docs.length ? "↻ Reemplazar documento" : "📄 Subir documento");
+        return `<div class="doc-upload">
+          <div class="doc-upload-head"><span class="doc-upload-icon">${multiple ? "🖊" : "▤"}</span><div><b>${esc(title)}</b><small>${esc(help)}</small></div></div>
+          <label class="photo">${buttonText}
+            <input type="file" accept="image/*" capture="environment" onchange="uploadSpecialDocument(this,'${key}','${esc(title)}',${multiple})">
+          </label>
+          ${status}
+        </div>`;
+      }
+
+      async function uploadSpecialDocument(input, key, title, multiple = false) {
+        const file = input.files?.[0];
+        if (!file || !configured()) return;
+        const label = input.closest(".photo");
+        try {
+          label.childNodes[0].textContent = "⏳ Subiendo documento ";
+          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+          const path = `${token}/documentos/${key}/${Date.now()}_${safeName}`;
+          const { error: upErr } = await sb.storage.from("evidencias").upload(path, file, { cacheControl: "3600", upsert: false });
+          if (upErr) throw upErr;
+          const { data: pub } = sb.storage.from("evidencias").getPublicUrl(path);
+          const docItem = {
+            url: pub.publicUrl, path, name: file.name, title,
+            stage: STEPS[step],
+            time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
+          };
+          if (multiple) {
+            data[key] = Array.isArray(data[key]) ? data[key] : [];
+            data[key].push(docItem);
+          } else {
+            data[key] = docItem;
+          }
+          logActivity("Documento subido", title);
+          await saveNow();
+          render();
+        } catch (e) {
+          console.error(e);
+          label.childNodes[0].textContent = "⚠ No se pudo subir. Reintentar ";
+        }
       }
 
       async function uploadEvidence(input) {
@@ -1788,7 +1952,8 @@
               checks(["Estiba estable","Trincado sin daños","Cantidad coincide con despacho"],7) + photo();
 
         if (step === 3)
-          h = `<button class="stamp" onclick="stamp('depart')">◷ Usar fecha y hora actual</button>${field(["depart","Fecha y hora de salida","datetime-local"])}`;
+          h = `<button class="stamp" onclick="stamp('depart')">◷ Usar fecha y hora actual</button>${field(["depart","Fecha y hora de salida","datetime-local"])}
+               ${documentUpload("departureDocument", "Documento de salida", "Toma o sube una foto legible del documento de salida antes de continuar.")}`;
 
         if (step === 4) h = delivery("1");
         if (step === 5) h = delivery("2");
@@ -1818,6 +1983,9 @@
           ${field(["arrive" + n,"Fecha y hora de llegada","datetime-local"])}
           ${field(["tempP" + n,"Temperatura (°C)","number"])}
           ${field(["p" + n + "ret","Jabas recuperadas","number"])}
+          ${documentUpload("receptionDocument" + n, "Documento de recepción · Punto " + n, "Sube una foto legible del documento de recepción correspondiente a este punto.")}
+          ${documentUpload("signedGuides" + n, "Guías firmadas · Punto " + n, "Debes subir fotos de las guías firmadas en este punto. Puedes agregar más de una foto.", true)}
+          <div class="section-intro"><i>📷</i><div><b>Fotos adicionales</b><small>Usa este apartado para evidencias fotográficas normales de la entrega.</small></div></div>
           ${photo()}`;
       }
 
@@ -1830,8 +1998,13 @@
         if (step === 2 && (!data.temp1 || [7,8,9].some(n => !data["c"+n])))
           m = "Completa los controles de carga y la temperatura.";
         if (step === 3 && !data.depart) m = "Registra la salida.";
+        if (step === 3 && data.depart && !data.departureDocument) m = "Sube el documento de salida para continuar.";
         if (step === 4 && (!data.arrive1 || !data.tempP1)) m = "Registra llegada y temperatura del punto 1.";
+        if (step === 4 && data.arrive1 && data.tempP1 && !data.receptionDocument1) m = "Sube el documento de recepción del punto 1.";
+        if (step === 4 && data.receptionDocument1 && (!Array.isArray(data.signedGuides1) || !data.signedGuides1.length)) m = "Sube al menos una foto de las guías firmadas del punto 1.";
         if (step === 5 && (!data.arrive2 || !data.tempP2)) m = "Registra llegada y temperatura del punto 2.";
+        if (step === 5 && data.arrive2 && data.tempP2 && !data.receptionDocument2) m = "Sube el documento de recepción del punto 2.";
+        if (step === 5 && data.receptionDocument2 && (!Array.isArray(data.signedGuides2) || !data.signedGuides2.length)) m = "Sube al menos una foto de las guías firmadas del punto 2.";
         if (step === 6 && (!data.returnTime || !data.receiver)) m = "Registra el retorno y quién recibe.";
         showMessage(m);
         return !m;
