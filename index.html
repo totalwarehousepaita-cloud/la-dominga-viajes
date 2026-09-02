@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
-    <title>Reporte de Viajes · La Dominga</title>
+    <title>La Dominga Viajes · 05TEAM</title>
     <style>
       :root {
         --deep: #075824;
@@ -780,24 +780,111 @@
           width: 100%;
         }
       }
+
+      /* V5 · Identidad visual 05TEAM */
+      :root {
+        --deep: #064f21;
+        --deep-2: #033b18;
+        --green: #20c92b;
+        --green-soft: #eaf9ed;
+        --ink: #102116;
+        --muted: #69766d;
+        --line: #dbe7de;
+        --bg: #f4f7f5;
+        --shadow: 0 14px 40px rgba(6,79,33,.08);
+      }
+      body {
+        background:
+          radial-gradient(circle at 100% 0%, rgba(32,201,43,.06), transparent 28%),
+          linear-gradient(180deg,#f8fbf9 0%,#f2f6f3 100%);
+      }
+      .professional-top {
+        height: 82px;
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        box-shadow: 0 6px 24px rgba(3,59,24,.06);
+        backdrop-filter: blur(12px);
+        background: rgba(255,255,255,.94);
+      }
+      .brand-lockup { display:flex; align-items:center; gap:13px; min-width:0; }
+      .brand-logo-img {
+        width: 52px; height: 52px; object-fit: contain; border-radius: 12px;
+        background:#fff; box-shadow: 0 5px 18px rgba(3,59,24,.11);
+      }
+      .brand b { font-size:16px; letter-spacing:-.01em; color:var(--deep-2); }
+      .brand small { margin-top:2px; font-size:11px; letter-spacing:.02em; }
+      .online { border:1px solid #cfe9d4; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6); }
+      .wrap { width:min(1120px,calc(100% - 34px)); }
+      .hero { padding:42px 0 25px; }
+      .hero h1,.wizard h1 { letter-spacing:-.035em; color:var(--deep-2); }
+      .hero p { font-size:15px; max-width:680px; }
+      .create {
+        background: linear-gradient(135deg,#043f1a 0%,#075824 58%,#0a6b2d 100%);
+        border:1px solid rgba(255,255,255,.08);
+        box-shadow: 0 18px 42px rgba(3,59,24,.18);
+        padding:28px 30px;
+      }
+      .create h2 { font-size:24px; letter-spacing:-.02em; }
+      .primary {
+        background: linear-gradient(180deg,#29d638,#1ec72d);
+        color:#052f14; box-shadow:0 8px 20px rgba(32,201,43,.24);
+        transition:transform .16s ease,box-shadow .16s ease,filter .16s ease;
+      }
+      .primary:hover { transform:translateY(-1px); box-shadow:0 10px 24px rgba(32,201,43,.3); filter:saturate(1.08); }
+      .secondary,.report-btn { transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease; }
+      .secondary:hover,.report-btn:hover { transform:translateY(-1px); box-shadow:0 7px 18px rgba(3,59,24,.08); border-color:#b9d9c1; }
+      .metrics { grid-template-columns:repeat(3,1fr); gap:15px; margin-top:18px; }
+      .metric {
+        position:relative; overflow:hidden; border-radius:20px; padding:21px;
+        box-shadow:var(--shadow); border-color:#e1ebe3;
+      }
+      .metric:after { content:""; position:absolute; width:82px; height:82px; border-radius:50%; right:-25px; top:-28px; background:rgba(32,201,43,.08); }
+      .metric b { font-size:34px; letter-spacing:-.04em; }
+      .section-title { display:flex; align-items:end; justify-content:space-between; margin-top:34px; }
+      .trip,.empty { border-color:#e0e9e2; box-shadow:var(--shadow); border-radius:20px; }
+      .trip { transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease; }
+      .trip:hover { transform:translateY(-2px); box-shadow:0 18px 42px rgba(6,79,33,.12); border-color:#cbe0cf; }
+      .trip-actions { background:#f8fbf9; margin:14px -25px -25px; padding:13px 25px; border-radius:0 0 20px 20px; }
+      .report-btn { background:#edf9f0; border-color:#c8e5ce; }
+      .nav {
+        background:rgba(255,255,255,.96); border-top:1px solid #dfe9e1; box-shadow:0 -10px 28px rgba(3,59,24,.06);
+      }
+      .nav button { font-weight:800; color:#496253; }
+      .wizard { width:min(820px,calc(100% - 28px)); }
+      .secure { border:1px solid #cfe7d4; background:linear-gradient(180deg,#f0faf2,#e9f7ec); border-radius:16px; }
+      .card { border-radius:22px; border-color:#dce8df; box-shadow:var(--shadow); }
+      .progress > * { box-shadow:0 4px 12px rgba(3,59,24,.05); }
+      .actions { box-shadow:0 -10px 30px rgba(3,59,24,.07); }
+      .live { border-radius:24px; box-shadow:0 26px 80px rgba(0,0,0,.18); }
+      @media (max-width:620px) {
+        .professional-top { height:72px; padding-left:14px; padding-right:14px; }
+        .brand-logo-img { width:44px; height:44px; border-radius:10px; }
+        .brand b { font-size:14px; }
+        .brand small { font-size:10px; }
+        .online { font-size:10px; padding:7px 9px; }
+        .hero { padding-top:29px; }
+        .create { padding:22px; }
+        .metrics { grid-template-columns:1fr; }
+      }
     </style>
   </head>
   <body>
     <div id="owner">
-      <header class="top">
-        <div class="logo">05</div>
-        <div class="brand">
-          <b>05TEAM</b><small>Control de operaciones</small>
+      <header class="top professional-top">
+        <div class="brand-lockup">
+          <img class="brand-logo-img" src="./logo.png" alt="05TEAM" />
+          <div class="brand">
+            <b>La Dominga Viajes</b><small>05TEAM · Control de operaciones</small>
+          </div>
         </div>
         <span class="online">● En línea</span>
       </header>
       <main class="wrap">
         <section class="hero">
-          <div class="eyebrow">VISTA DEL DUEÑO</div>
+          <div class="eyebrow">CENTRO DE CONTROL · 05TEAM</div>
           <h1>Control de operaciones</h1>
-          <p>
-            Crea un viaje y observa cómo el transportista completa cada etapa.
-          </p>
+          <p>Gestiona viajes, incidencias, evidencias y reportes desde un solo lugar.</p>
         </section>
         <section class="create">
           <div>
@@ -839,13 +926,14 @@
       </nav>
     </div>
     <div id="wizard" class="hidden">
-      <header class="top">
-        <div class="logo">05</div>
-        <div class="brand">
-          <b>Portal del transportista</b
-          ><small id="tripCode">Viaje asignado</small>
+      <header class="top professional-top">
+        <div class="brand-lockup">
+          <img class="brand-logo-img" src="./logo.png" alt="05TEAM" />
+          <div class="brand">
+            <b>Portal del transportista</b><small id="tripCode">Viaje asignado</small>
+          </div>
         </div>
-        <span class="online">Guardado automático</span>
+        <span class="online">Registro seguro</span>
       </header>
       <main class="wizard">
         <div class="progress" id="progress"></div>
@@ -1289,6 +1377,18 @@
         }
       }
 
+      let pdfLogoCache = null;
+      async function getPdfLogo() {
+        if (pdfLogoCache) return pdfLogoCache;
+        try {
+          pdfLogoCache = await imageUrlToJpegData("./logo.png", 900);
+          return pdfLogoCache;
+        } catch (e) {
+          console.warn("No se pudo cargar el logo para el PDF", e);
+          return null;
+        }
+      }
+
       async function createTripPdf(rawState, tripCode = "", t = "") {
         if (!window.jspdf || !window.jspdf.jsPDF) {
           alert("No se pudo cargar el generador de PDF. Recarga la pagina e intenta nuevamente.");
@@ -1308,23 +1408,34 @@
         const progress = s.closed ? 100 : Math.min(100, Math.round((st + 1) * 12.5));
         const now = new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
 
-        doc.setFillColor(7, 72, 35);
-        doc.rect(0, 0, 210, 28, "F");
+        const logoPdf = await getPdfLogo();
+        doc.setFillColor(5, 69, 29);
+        doc.rect(0, 0, 210, 34, "F");
+        doc.setFillColor(32, 201, 43);
+        doc.rect(0, 31.5, 210, 2.5, "F");
+        if (logoPdf) {
+          doc.setFillColor(255, 255, 255);
+          doc.roundedRect(12, 5, 22, 22, 3, 3, "F");
+          const lr = Math.min(19 / logoPdf.width, 19 / logoPdf.height);
+          const lw = logoPdf.width * lr, lh = logoPdf.height * lr;
+          doc.addImage(logoPdf.data, "JPEG", 13.5 + (19-lw)/2, 6.5 + (19-lh)/2, lw, lh, undefined, "FAST");
+        }
         doc.setTextColor(255, 255, 255);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(17);
-        doc.text("05TEAM - Reporte de viaje", 14, 12);
-        doc.setFontSize(10);
+        doc.text("REPORTE DE VIAJE", 40, 13);
+        doc.setFontSize(9.5);
         doc.setFont("helvetica", "normal");
-        doc.text(`${pdfSafe(code)} | Generado: ${pdfSafe(now)}`, 14, 20);
+        doc.text("LA DOMINGA VIAJES · 05TEAM", 40, 20);
+        doc.text(`Código ${pdfSafe(code)}  |  Generado ${pdfSafe(now)}`, 40, 26);
 
         doc.setTextColor(20, 35, 25);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(13);
-        doc.text("Estado actual", 14, 38);
+        doc.text("Resumen ejecutivo", 14, 43);
 
         doc.autoTable({
-          startY: 42,
+          startY: 47,
           theme: "grid",
           head: [["Viaje", "Etapa actual", "Avance", "Incidencias"]],
           body: [[pdfSafe(code), pdfSafe(currentStage), `${progress}%`, String(logs.length)]],
@@ -1474,10 +1585,15 @@
         const pages = doc.getNumberOfPages();
         for (let i = 1; i <= pages; i++) {
           doc.setPage(i);
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(100, 100, 100);
+          doc.setDrawColor(210, 228, 214);
+          doc.line(14, 283, 196, 283);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(5, 79, 33);
           doc.setFontSize(8);
-          doc.text(`05TEAM | ${pdfSafe(code)} | Pagina ${i} de ${pages}`, 14, 289);
+          doc.text("05TEAM · La Dominga Viajes", 14, 289);
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(105, 115, 108);
+          doc.text(`${pdfSafe(code)} · Página ${i} de ${pages}`, 196, 289, { align: "right" });
         }
 
         const filename = `Reporte_${String(code).replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
