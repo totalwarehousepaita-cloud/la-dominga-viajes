@@ -1250,10 +1250,46 @@
         if (event) event.stopPropagation();
         const row = await fetchTrip(t);
         if (!row) return alert("No se pudo cargar el viaje para generar el PDF.");
-        createTripPdf(row.state, row.trip_code || "", t);
+        await createTripPdf(row.state, row.trip_code || "", t);
       }
 
-      function createTripPdf(rawState, tripCode = "", t = "") {
+      async function imageUrlToJpegData(url) {
+        try {
+          const response = await fetch(url, { mode: "cors" });
+          if (!response.ok) throw new Error("No se pudo descargar la imagen");
+          const blob = await response.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          try {
+            const img = await new Promise((resolve, reject) => {
+              const el = new Image();
+              el.onload = () => resolve(el);
+              el.onerror = reject;
+              el.src = objectUrl;
+            });
+            const maxSide = 1600;
+            const scale = Math.min(1, maxSide / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round((img.naturalWidth || img.width) * scale));
+            canvas.height = Math.max(1, Math.round((img.naturalHeight || img.height) * scale));
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            return {
+              data: canvas.toDataURL("image/jpeg", 0.82),
+              width: canvas.width,
+              height: canvas.height
+            };
+          } finally {
+            URL.revokeObjectURL(objectUrl);
+          }
+        } catch (e) {
+          console.error("No se pudo incrustar evidencia en PDF", e);
+          return null;
+        }
+      }
+
+      async function createTripPdf(rawState, tripCode = "", t = "") {
         if (!window.jspdf || !window.jspdf.jsPDF) {
           alert("No se pudo cargar el generador de PDF. Recarga la pagina e intenta nuevamente.");
           return;
@@ -1381,15 +1417,58 @@
           doc.setFont("helvetica", "bold");
           doc.setFontSize(12);
           doc.text("Evidencias fotograficas", 14, y);
-          doc.autoTable({
-            startY: y + 3,
-            theme: "grid",
-            head: [["Etapa", "Fecha", "Enlace"]],
-            body: evidences.map(e => [pdfSafe(e.stage), pdfSafe(e.time), pdfSafe(e.url)]),
-            styles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" },
-            headStyles: { fillColor: [22, 102, 51] },
-            columnStyles: { 2: { cellWidth: 95 } }
-          });
+          y += 7;
+
+          for (let i = 0; i < evidences.length; i++) {
+            const e = evidences[i] || {};
+            const loaded = e.url ? await imageUrlToJpegData(e.url) : null;
+
+            if (y > 245) {
+              doc.addPage();
+              y = 18;
+            }
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(9.5);
+            doc.setTextColor(20, 35, 25);
+            doc.text(`Evidencia ${i + 1} - ${pdfSafe(e.stage || "Sin etapa")}`, 14, y);
+            y += 5;
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(90, 90, 90);
+            doc.text(pdfSafe(e.time || "Fecha no registrada"), 14, y);
+            y += 4;
+
+            if (loaded) {
+              const maxW = 182;
+              const maxH = 105;
+              const ratio = Math.min(maxW / loaded.width, maxH / loaded.height);
+              const imgW = loaded.width * ratio;
+              const imgH = loaded.height * ratio;
+              if (y + imgH > 278) {
+                doc.addPage();
+                y = 18;
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(9.5);
+                doc.setTextColor(20, 35, 25);
+                doc.text(`Evidencia ${i + 1} - ${pdfSafe(e.stage || "Sin etapa")}`, 14, y);
+                y += 5;
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(8);
+                doc.setTextColor(90, 90, 90);
+                doc.text(pdfSafe(e.time || "Fecha no registrada"), 14, y);
+                y += 4;
+              }
+              const x = 14 + (182 - imgW) / 2;
+              doc.addImage(loaded.data, "JPEG", x, y, imgW, imgH, undefined, "FAST");
+              y += imgH + 9;
+            } else {
+              doc.setTextColor(150, 70, 70);
+              doc.setFontSize(8);
+              doc.text("No se pudo cargar esta fotografia en el reporte.", 14, y + 3);
+              y += 12;
+            }
+          }
         }
 
         const pages = doc.getNumberOfPages();
