@@ -1019,15 +1019,13 @@
           }),
         });
         activityLog = activityLog.slice(0, 100);
-        save();
       }
 
       function field(id) {
         return `<label class="field">${id[1]}
           <input id="${id[0]}" type="${id[2] || "text"}"
             value="${esc(data[id[0]])}" placeholder="${id[3] || ""}"
-            oninput="data.${id[0]}=this.value;save()"
-            onchange="logActivity('Dato actualizado','${esc(id[1])}')">
+            oninput="data.${id[0]}=this.value">
         </label>`;
       }
 
@@ -1139,7 +1137,8 @@
             $("owner").classList.add("hidden");
             $("wizard").classList.remove("hidden");
             render();
-            subscribeTrip(token);
+            // El transportista trabaja localmente en cada etapa.
+            // Los datos se envían a Supabase al pulsar Continuar/Cerrar o al reportar una incidencia.
           } catch (e) {
             console.error(e);
             $("formCard").innerHTML = '<div class="notice">No se pudo cargar el viaje.</div>';
@@ -1482,7 +1481,6 @@
       function backStep() {
         if (step > 0) {
           step--;
-          save();
           render();
         } else history.back();
       }
