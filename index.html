@@ -1650,102 +1650,121 @@
           margin: { left: 14, right: 14 }
         });
 
+        // Renderiza documentos y evidencias como bloques indivisibles para evitar solapamientos.
+        async function renderPdfImageBlock(item, title, currentY, options = {}) {
+          const pageTop = 18;
+          const pageBottom = 276;
+          const contentW = 182;
+          const maxImgH = options.maxImgH || 95;
+          const titleSize = options.titleSize || 9.5;
+          const blockGap = options.blockGap || 10;
+          const loaded = item && item.url ? await imageUrlToJpegData(item.url) : null;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(titleSize);
+          const safeTitle = pdfSafe(title || 'Evidencia fotográfica');
+          const titleLines = doc.splitTextToSize(safeTitle, contentW);
+          const titleH = Math.max(5, titleLines.length * 4.2);
+          const dateText = pdfSafe((item && item.time) || 'Fecha no registrada');
+          const dateH = 4;
+
+          let imgW = 0, imgH = 0;
+          if (loaded) {
+            const ratio = Math.min(contentW / loaded.width, maxImgH / loaded.height, 1);
+            imgW = loaded.width * ratio;
+            imgH = loaded.height * ratio;
+          }
+
+          const bodyH = loaded ? imgH : 10;
+          const blockH = titleH + dateH + 5 + bodyH + blockGap;
+
+          // Si el bloque completo no cabe y sí puede caber en una página nueva, muévelo entero.
+          if (currentY + blockH > pageBottom && blockH <= (pageBottom - pageTop)) {
+            doc.addPage();
+            currentY = pageTop;
+          } else if (currentY > pageBottom - 20) {
+            doc.addPage();
+            currentY = pageTop;
+          }
+
+          doc.setTextColor(20, 35, 25);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(titleSize);
+          doc.text(titleLines, 14, currentY);
+          currentY += titleH;
+
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(90, 90, 90);
+          doc.text(dateText, 14, currentY);
+          currentY += dateH + 2;
+
+          if (loaded) {
+            // Si por alguna razón una imagen aún no entra, inicia una página nueva y repite el encabezado.
+            if (currentY + imgH > pageBottom) {
+              doc.addPage();
+              currentY = pageTop;
+              doc.setTextColor(20, 35, 25);
+              doc.setFont('helvetica', 'bold');
+              doc.setFontSize(titleSize);
+              doc.text(titleLines, 14, currentY);
+              currentY += titleH;
+              doc.setFont('helvetica', 'normal');
+              doc.setFontSize(8);
+              doc.setTextColor(90, 90, 90);
+              doc.text(dateText, 14, currentY);
+              currentY += dateH + 2;
+            }
+            const x = 14 + (contentW - imgW) / 2;
+            doc.addImage(loaded.data, 'JPEG', x, currentY, imgW, imgH, undefined, 'FAST');
+            currentY += imgH + blockGap;
+          } else {
+            doc.setTextColor(150, 70, 70);
+            doc.setFontSize(8);
+            doc.text(options.errorText || 'No se pudo cargar esta imagen en el reporte.', 14, currentY + 3);
+            currentY += 10 + blockGap;
+          }
+
+          return currentY;
+        }
+
         if (specialDocuments.length) {
-          y = doc.lastAutoTable.finalY + 9;
+          y = Math.max(y, (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY + 9 : y));
           if (y > 235) { doc.addPage(); y = 18; }
-          doc.setFont("helvetica", "bold");
+          doc.setFont('helvetica', 'bold');
           doc.setFontSize(12);
           doc.setTextColor(20, 35, 25);
-          doc.text("Documentos operativos", 14, y);
-          y += 7;
+          doc.text('Documentos operativos', 14, y);
+          y += 8;
+
           for (let i = 0; i < specialDocuments.length; i++) {
             const e = specialDocuments[i] || {};
-            const loaded = e.url ? await imageUrlToJpegData(e.url) : null;
-            if (y > 245) { doc.addPage(); y = 18; }
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(9.5);
-            doc.setTextColor(20, 35, 25);
-            doc.text(pdfSafe(e.label || e.title || "Documento"), 14, y);
-            y += 5;
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(8);
-            doc.setTextColor(90, 90, 90);
-            doc.text(pdfSafe(e.time || "Fecha no registrada"), 14, y);
-            y += 4;
-            if (loaded) {
-              const maxW = 182, maxH = 110;
-              const ratio = Math.min(maxW / loaded.width, maxH / loaded.height);
-              const imgW = loaded.width * ratio, imgH = loaded.height * ratio;
-              if (y + imgH > 278) { doc.addPage(); y = 18; }
-              const x = 14 + (182 - imgW) / 2;
-              doc.addImage(loaded.data, "JPEG", x, y, imgW, imgH, undefined, "FAST");
-              y += imgH + 9;
-            } else {
-              doc.setTextColor(150, 70, 70);
-              doc.setFontSize(8);
-              doc.text("No se pudo cargar este documento en el reporte.", 14, y + 3);
-              y += 12;
-            }
+            y = await renderPdfImageBlock(
+              e,
+              e.label || e.title || 'Documento',
+              y,
+              { maxImgH: 105, errorText: 'No se pudo cargar este documento en el reporte.' }
+            );
           }
         }
 
         if (evidences.length) {
-          y = doc.lastAutoTable.finalY + 9;
+          // MUY IMPORTANTE: continuar desde el y real de documentos, no desde lastAutoTable.finalY.
           if (y > 235) { doc.addPage(); y = 18; }
-          doc.setFont("helvetica", "bold");
+          doc.setFont('helvetica', 'bold');
           doc.setFontSize(12);
-          doc.text("Evidencias fotograficas", 14, y);
-          y += 7;
+          doc.setTextColor(20, 35, 25);
+          doc.text('Evidencias fotograficas', 14, y);
+          y += 8;
 
           for (let i = 0; i < evidences.length; i++) {
             const e = evidences[i] || {};
-            const loaded = e.url ? await imageUrlToJpegData(e.url) : null;
-
-            if (y > 245) {
-              doc.addPage();
-              y = 18;
-            }
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(9.5);
-            doc.setTextColor(20, 35, 25);
-            doc.text(pdfSafe(evidenceDescription(e, i)), 14, y, { maxWidth: 182 });
-            y += 5;
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(8);
-            doc.setTextColor(90, 90, 90);
-            doc.text(pdfSafe(e.time || "Fecha no registrada"), 14, y);
-            y += 4;
-
-            if (loaded) {
-              const maxW = 182;
-              const maxH = 92;
-              const ratio = Math.min(maxW / loaded.width, maxH / loaded.height);
-              const imgW = loaded.width * ratio;
-              const imgH = loaded.height * ratio;
-              if (y + imgH > 278) {
-                doc.addPage();
-                y = 18;
-                doc.setFont("helvetica", "bold");
-                doc.setFontSize(9.5);
-                doc.setTextColor(20, 35, 25);
-                doc.text(pdfSafe(evidenceDescription(e, i)), 14, y, { maxWidth: 182 });
-                y += 5;
-                doc.setFont("helvetica", "normal");
-                doc.setFontSize(8);
-                doc.setTextColor(90, 90, 90);
-                doc.text(pdfSafe(e.time || "Fecha no registrada"), 14, y);
-                y += 4;
-              }
-              const x = 14 + (182 - imgW) / 2;
-              doc.addImage(loaded.data, "JPEG", x, y, imgW, imgH, undefined, "FAST");
-              y += imgH + 9;
-            } else {
-              doc.setTextColor(150, 70, 70);
-              doc.setFontSize(8);
-              doc.text("No se pudo cargar esta fotografia en el reporte.", 14, y + 3);
-              y += 12;
-            }
+            y = await renderPdfImageBlock(
+              e,
+              evidenceDescription(e, i),
+              y,
+              { maxImgH: 90, errorText: 'No se pudo cargar esta fotografia en el reporte.' }
+            );
           }
         }
 
