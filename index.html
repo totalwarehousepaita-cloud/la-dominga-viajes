@@ -1672,7 +1672,14 @@
           if (loaded) {
             // Ajuste tipo contain: usa el mayor tamaño posible sin recortar ni deformar.
             // También permite ampliar imágenes pequeñas para mantener una presentación grande y uniforme.
-            const ratio = Math.min(contentW / loaded.width, maxImgH / loaded.height);
+            // Mantiene exactamente el tamaño actual de las fotos horizontales.
+            // Las fotos verticales pueden usar más alto de página para verse más grandes,
+            // siempre con ajuste tipo contain: completas, sin recorte y sin deformación.
+            const isVertical = loaded.height > loaded.width;
+            const effectiveMaxImgH = isVertical
+              ? (options.verticalMaxImgH || Math.max(maxImgH, 145))
+              : maxImgH;
+            const ratio = Math.min(contentW / loaded.width, effectiveMaxImgH / loaded.height);
             imgW = loaded.width * ratio;
             imgH = loaded.height * ratio;
           }
@@ -1745,7 +1752,7 @@
               e,
               e.label || e.title || 'Documento',
               y,
-              { maxImgH: 105, errorText: 'No se pudo cargar este documento en el reporte.' }
+              { maxImgH: 105, verticalMaxImgH: 150, errorText: 'No se pudo cargar este documento en el reporte.' }
             );
           }
         }
@@ -1765,7 +1772,7 @@
               e,
               evidenceDescription(e, i),
               y,
-              { maxImgH: 90, errorText: 'No se pudo cargar esta fotografia en el reporte.' }
+              { maxImgH: 90, verticalMaxImgH: 150, errorText: 'No se pudo cargar esta fotografia en el reporte.' }
             );
           }
         }
