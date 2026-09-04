@@ -1655,7 +1655,7 @@
           const pageTop = 18;
           const pageBottom = 276;
           const contentW = 182;
-          const maxImgH = options.maxImgH || 95;
+          const maxImgH = options.maxImgH || 150;
           const titleSize = options.titleSize || 9.5;
           const blockGap = options.blockGap || 10;
           const loaded = item && item.url ? await imageUrlToJpegData(item.url) : null;
@@ -1670,7 +1670,9 @@
 
           let imgW = 0, imgH = 0;
           if (loaded) {
-            const ratio = Math.min(contentW / loaded.width, maxImgH / loaded.height, 1);
+            // Ajuste tipo contain: usa el mayor tamaño posible sin recortar ni deformar.
+            // También permite ampliar imágenes pequeñas para mantener una presentación grande y uniforme.
+            const ratio = Math.min(contentW / loaded.width, maxImgH / loaded.height);
             imgW = loaded.width * ratio;
             imgH = loaded.height * ratio;
           }
