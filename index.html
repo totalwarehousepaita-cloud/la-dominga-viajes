@@ -121,6 +121,49 @@
         color: #d4e7d8;
         font-size: 14px;
       }
+      .create-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .create.refrigerated {
+        background: linear-gradient(130deg, #2398c7, #157aa6);
+      }
+      .create.refrigerated p {
+        color: #e7f7ff;
+      }
+      .create.refrigerated .eyebrow {
+        color: #d8f4ff !important;
+      }
+      .refrigerated-btn {
+        background: #c9f0ff;
+        color: #07506f;
+      }
+      .trip.refrigerated-trip {
+        border-color: #9edcf4;
+        box-shadow: inset 4px 0 0 #37a9d6;
+      }
+      .trip-type-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 900;
+        margin-bottom: 8px;
+        letter-spacing: .04em;
+      }
+      .trip-type-badge.normal { background:#e8f7eb; color:#075824; }
+      .trip-type-badge.refrigerated { background:#dff5ff; color:#08658a; }
+      .photo-only-card {
+        border: 1px solid #b9e1f2;
+        background: #f3fbff;
+        border-radius: 16px;
+        padding: 14px;
+        margin-bottom: 14px;
+      }
+      .photo-only-card b { color:#08658a; display:block; margin-bottom:5px; }
+      .photo-only-card small { color:var(--muted); line-height:1.4; }
       .primary {
         border: 0;
         border-radius: 13px;
@@ -940,6 +983,7 @@
         .hero { padding:26px 0 18px; }
         .hero h1 { font-size:clamp(27px,8vw,38px); line-height:1.05; }
         .hero p { font-size:13px; line-height:1.5; }
+        .create-grid { grid-template-columns:1fr; }
         .create { padding:20px 16px; border-radius:18px; }
         .create h2 { font-size:20px; }
         .metrics { gap:10px; }
@@ -1001,17 +1045,24 @@
           <h1>Control de operaciones</h1>
           <p>Gestiona viajes, incidencias, evidencias y reportes desde un solo lugar.</p>
         </section>
-        <section class="create">
-          <div>
-            <div class="eyebrow" style="color: #b9edc1">NUEVA ASIGNACIÓN</div>
-            <h2>Crear viaje y enviar enlace</h2>
-            <p>
-              El enlace aparece inmediatamente. El transportista completa todos
-              sus datos.
-            </p>
-          </div>
-          <button class="primary" onclick="createTrip()">Crear viaje →</button>
-        </section>
+        <div class="create-grid">
+          <section class="create">
+            <div>
+              <div class="eyebrow" style="color: #b9edc1">NUEVA ASIGNACIÓN</div>
+              <h2>Crear viaje y enviar enlace</h2>
+              <p>Flujo operativo completo con controles, documentos y evidencias.</p>
+            </div>
+            <button class="primary" onclick="createTrip('normal')">Crear viaje →</button>
+          </section>
+          <section class="create refrigerated">
+            <div>
+              <div class="eyebrow">NUEVA ASIGNACIÓN REFRIGERADA</div>
+              <h2>Crear viaje refrigerado</h2>
+              <p>Identificación del transportista y 8 puntos de ruta registrados únicamente con fotos.</p>
+            </div>
+            <button class="primary refrigerated-btn" onclick="createTrip('refrigerated')">Crear viaje refrigerado →</button>
+          </section>
+        </div>
         <section class="metrics">
           <div class="metric">
             <span>Viajes activos</span><b id="activeCount">0</b
@@ -1091,6 +1142,28 @@
         "Retorno",
         "Cierre",
       ];
+      const REFRIGERATED_STEPS = [
+        "Identificación",
+        "Llegada a planta para carga",
+        "Salida de planta cargado",
+        "Punto 1 ruta",
+        "Punto 2 ruta",
+        "Punto 3 ruta",
+        "Punto 4 ruta",
+        "Punto 5 ruta",
+        "Llegada de la carga"
+      ];
+      const REFRIGERATED_TITLES = [
+        "Identificación del transportista",
+        "Llegada a planta para carga",
+        "Salida de planta con la carga",
+        "Evidencia del punto 1 de ruta",
+        "Evidencia del punto 2 de ruta",
+        "Evidencia del punto 3 de ruta",
+        "Evidencia del punto 4 de ruta",
+        "Evidencia del punto 5 de ruta",
+        "Llegada final de la carga"
+      ];
 
       const SB_URL = window.LA_DOMINGA_CONFIG?.SUPABASE_URL || "";
       const SB_KEY = window.LA_DOMINGA_CONFIG?.SUPABASE_ANON_KEY || "";
@@ -1106,6 +1179,7 @@
       let saveTimer = null;
       let lastSavedJson = "";
       let data = {
+        tripType: "normal",
         driver: "", phone: "", plate: "", helper: "",
         temp0: "", temp1: "",
         p1j: "37", p2j: "38", p1t: "78", p2t: "78",
@@ -1127,6 +1201,25 @@
         return !!sb;
       }
 
+      function isRefrigeratedState(stateOrData = data) {
+        const candidate = stateOrData && stateOrData.data ? stateOrData.data : stateOrData;
+        return (candidate && candidate.tripType) === "refrigerated";
+      }
+
+      function stepsFor(stateOrData = data) {
+        return isRefrigeratedState(stateOrData) ? REFRIGERATED_STEPS : STEPS;
+      }
+
+      function stepTitleFor(index, stateOrData = data) {
+        if (isRefrigeratedState(stateOrData)) return REFRIGERATED_TITLES[index] || REFRIGERATED_STEPS[index] || "Registro fotográfico";
+        return [
+          "Identificación del transportista", "Unidad lista para cargar",
+          "Carga, estiba y seguridad", "Liberación de salida",
+          "Entrega Plaza Vea · P1", "Entrega Plaza Vea · P2",
+          "Regreso a La Dominga", "Resumen y cierre"
+        ][index] || "Registro del viaje";
+      }
+
       function showConfigError() {
         $("overlay").innerHTML = `
           <div class="modal">
@@ -1145,9 +1238,9 @@
           </div>`;
       }
 
-      function emptyState() {
+      function emptyState(type = "normal") {
         return {
-          data: { ...data },
+          data: { ...data, tripType: type },
           step: 0,
           incidents: 0,
           incidentLog: [],
@@ -1231,7 +1324,7 @@
         activityLog.unshift({
           action,
           detail,
-          stage: STEPS[step],
+          stage: stepsFor()[step],
           time: new Date().toLocaleString("es-PE", {
             dateStyle: "short", timeStyle: "short"
           }),
@@ -1259,31 +1352,33 @@
         render();
       }
 
-      async function nextTripCode() {
+      async function nextTripCode(type = "normal") {
         const { data: rows, error } = await sb
           .from("trips")
           .select("trip_code")
           .order("created_at", { ascending: false })
-          .limit(50);
+          .limit(100);
         if (error) throw error;
+        const prefix = type === "refrigerated" ? "RF" : "LD";
+        const rx = new RegExp("^" + prefix + "-(\\d+)$");
         let max = 0;
         (rows || []).forEach(r => {
-          const m = String(r.trip_code || "").match(/LD-(\d+)/);
+          const m = String(r.trip_code || "").match(rx);
           if (m) max = Math.max(max, Number(m[1]));
         });
-        return "LD-" + String(max + 1).padStart(3, "0");
+        return prefix + "-" + String(max + 1).padStart(3, "0");
       }
 
-      async function createTrip() {
+      async function createTrip(type = "normal") {
         if (!configured()) return showConfigError();
         try {
-          const displayCode = await nextTripCode();
+          const displayCode = await nextTripCode(type);
           token = crypto.randomUUID().replaceAll("-", "").slice(0, 20).toUpperCase();
-          const state = emptyState();
+          const state = emptyState(type);
           state.data.tripCode = displayCode;
           state.activityLog = [{
-            action: "Viaje creado",
-            detail: "Enlace generado por el dueño",
+            action: type === "refrigerated" ? "Viaje refrigerado creado" : "Viaje creado",
+            detail: type === "refrigerated" ? "Enlace de ruta refrigerada generado por el dueño" : "Enlace generado por el dueño",
             stage: "Asignación",
             time: new Date().toLocaleString("es-PE", {
               dateStyle: "short", timeStyle: "short"
@@ -1296,7 +1391,7 @@
           });
           if (error) throw error;
           const link = `${location.origin}${location.pathname}?viaje=${token}`;
-          showShare(link);
+          showShare(link, type);
           await renderOwner();
         } catch (e) {
           console.error(e);
@@ -1304,12 +1399,12 @@
         }
       }
 
-      function showShare(link) {
+      function showShare(link, type = "normal") {
         $("overlay").innerHTML = `
           <div class="modal"><div class="sheet">
             <div class="eyebrow">VIAJE CREADO</div>
             <h2>Enlace listo para enviar</h2>
-            <div class="share">El transportista completará su identificación, vehículo y operación desde este enlace.</div>
+            <div class="share">${type === "refrigerated" ? "El transportista completará su identificación y registrará los 8 puntos del recorrido únicamente con fotografías." : "El transportista completará su identificación, vehículo y operación desde este enlace."}</div>
             <label class="field">Enlace exclusivo
               <input id="shareInput" value="${esc(link)}" readonly>
             </label>
@@ -1403,8 +1498,9 @@
 
         if (mostRecent) {
           const st = mostRecent.s.step || 0;
-          $("stageCount").textContent = `${st + 1}/8`;
-          $("stageText").textContent = STEPS[st];
+          const recentSteps = stepsFor(mostRecent.s);
+          $("stageCount").textContent = `${Math.min(st + 1, recentSteps.length)}/${recentSteps.length}`;
+          $("stageText").textContent = recentSteps[st] || "Cerrado";
         } else {
           $("stageCount").textContent = "0/8";
           $("stageText").textContent = "Sin actividad";
@@ -1420,14 +1516,18 @@
         $("tripList").innerHTML = trips.map(({ token: t, trip_code, s }) => {
           const d = s.data || {};
           const st = s.step || 0;
-          const status = s.closed ? "CERRADO" : STEPS[st];
+          const tripSteps = stepsFor(s);
+          const refrigerated = isRefrigeratedState(s);
+          const status = s.closed ? "CERRADO" : (tripSteps[st] || "Pendiente");
+          const pct = s.closed ? 100 : Math.min(100, ((st + 1) / tripSteps.length) * 100);
           return `
-            <div class="trip" onclick="openTripLive('${esc(t)}')"
+            <div class="trip ${refrigerated ? "refrigerated-trip" : ""}" onclick="openTripLive('${esc(t)}')"
                  style="margin-bottom:12px">
+              <span class="trip-type-badge ${refrigerated ? "refrigerated" : "normal"}">${refrigerated ? "❄ VIAJE REFRIGERADO" : "VIAJE OPERATIVO"}</span>
               <b>${esc(d.driver || "Transportista pendiente")}</b>
               <small>${esc(trip_code || d.tripCode || "Viaje")} · ${esc(d.plate || "Sin placa")} · ${esc(status)}</small>
-              <div class="bar"><i style="width:${s.closed ? 100 : (st + 1) * 12.5}%"></i></div>
-              <small>${s.closed ? "Viaje finalizado" : `${STEPS[st]} · Pulsa para ver los datos`}</small>
+              <div class="bar"><i style="width:${pct}%"></i></div>
+              <small>${s.closed ? "Viaje finalizado" : `${esc(tripSteps[st] || "Pendiente")} · Pulsa para ver los datos`}</small>
               <div class="trip-actions">
                 <button class="report-btn" onclick="downloadTripPdf('${esc(t)}', event)">⬇ Descargar PDF</button>
                 <button class="danger" onclick="deleteTrip(event,'${esc(t)}')">Eliminar viaje</button>
@@ -1521,16 +1621,18 @@
         const logs = Array.isArray(s.incidentLog) ? s.incidentLog : [];
         const activity = Array.isArray(s.activityLog) ? s.activityLog : [];
         const evidences = Array.isArray(d.evidences) ? d.evidences : [];
-        const specialDocuments = [
+        const refrigerated = isRefrigeratedState(s);
+        const tripSteps = stepsFor(s);
+        const specialDocuments = refrigerated ? [] : [
           ...(d.departureDocument ? [{...d.departureDocument, label:"Documento de salida"}] : []),
           ...(d.receptionDocument1 ? [{...d.receptionDocument1, label:"Documento de recepción · Punto 1"}] : []),
           ...((Array.isArray(d.signedGuides1) ? d.signedGuides1 : []).map(x => ({...x, label:"Guía firmada · Punto 1"}))),
           ...(d.receptionDocument2 ? [{...d.receptionDocument2, label:"Documento de recepción · Punto 2"}] : []),
           ...((Array.isArray(d.signedGuides2) ? d.signedGuides2 : []).map(x => ({...x, label:"Guía firmada · Punto 2"})))
         ];
-        const code = tripCode || d.tripCode || (t ? "LD-" + t.slice(0, 4) : "Viaje");
-        const currentStage = s.closed ? "Cerrado" : (STEPS[st] || "Pendiente");
-        const progress = s.closed ? 100 : Math.min(100, Math.round((st + 1) * 12.5));
+        const code = tripCode || d.tripCode || (t ? (refrigerated ? "RF-" : "LD-") + t.slice(0, 4) : "Viaje");
+        const currentStage = s.closed ? "Cerrado" : (tripSteps[st] || "Pendiente");
+        const progress = s.closed ? 100 : Math.min(100, Math.round(((st + 1) / tripSteps.length) * 100));
         const now = new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" });
 
         const logoPdf = await getPdfLogo();
@@ -1548,7 +1650,7 @@
         doc.setTextColor(255, 255, 255);
         doc.setFont("helvetica", "bold");
         doc.setFontSize(17);
-        doc.text("REPORTE DE VIAJE", 40, 13);
+        doc.text(refrigerated ? "REPORTE DE VIAJE REFRIGERADO" : "REPORTE DE VIAJE", 40, 13);
         doc.setFontSize(9.5);
         doc.setFont("helvetica", "normal");
         doc.text("LA DOMINGA VIAJES · 05TEAM", 40, 20);
@@ -1568,14 +1670,16 @@
           headStyles: { fillColor: [22, 102, 51] }
         });
 
-        const general = [
+        const general = (refrigerated ? [
+          ["Tipo de viaje", "Refrigerado"], ["Conductor", d.driver], ["Telefono", d.phone], ["Placa", d.plate], ["Auxiliar", d.helper]
+        ] : [
           ["Conductor", d.driver], ["Telefono", d.phone], ["Placa", d.plate], ["Auxiliar", d.helper],
           ["Temp. inicial", d.temp0 ? `${d.temp0} C` : ""], ["Temp. carga", d.temp1 ? `${d.temp1} C` : ""],
           ["Salida", pdfDate(d.depart)], ["Llegada Punto 1", pdfDate(d.arrive1)],
           ["Temp. Punto 1", d.tempP1 ? `${d.tempP1} C` : ""], ["Llegada Punto 2", pdfDate(d.arrive2)],
           ["Temp. Punto 2", d.tempP2 ? `${d.tempP2} C` : ""], ["Retorno", pdfDate(d.returnTime)],
           ["Recibe jabas", d.receiver], ["Jabas devueltas", d.returnedPlant], ["Observacion", d.notes]
-        ].map(([a,b]) => [a, pdfSafe(b)]);
+        ]).map(([a,b]) => [a, pdfSafe(b)]);
 
         let y = doc.lastAutoTable.finalY + 9;
         doc.setFont("helvetica", "bold");
@@ -1596,7 +1700,7 @@
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
         doc.text("Avance por etapas", 14, y);
-        const stageRows = STEPS.map((name, i) => {
+        const stageRows = tripSteps.map((name, i) => {
           let status = "Pendiente";
           if (s.closed || i < st) status = "Completada";
           else if (i === st) status = "Actual";
@@ -1812,19 +1916,24 @@
         const s = normalizeState(rawState);
         const d = s.data || {}, st = s.step || 0;
         const events = s.activityLog || [], logs = s.incidentLog || [];
+        const refrigerated = isRefrigeratedState(s);
+        const tripSteps = stepsFor(s);
         liveToken = t;
-        const code = tripCode || d.tripCode || "LD-" + t.slice(0, 4);
+        const code = tripCode || d.tripCode || (refrigerated ? "RF-" : "LD-") + t.slice(0, 4);
+        const pct = s.closed ? 100 : Math.min(100, Math.round(((st + 1) / tripSteps.length) * 100));
 
-        const rows = [
+        const rows = refrigerated ? [
+          ["Tipo de viaje", "Refrigerado"], ["Conductor", d.driver], ["Teléfono", d.phone], ["Placa", d.plate], ["Auxiliar", d.helper]
+        ] : [
           ["Conductor", d.driver], ["Teléfono", d.phone], ["Placa", d.plate],
           ["Auxiliar", d.helper], ["Temperatura inicial", d.temp0 && d.temp0 + " °C"],
           ["Temperatura carga", d.temp1 && d.temp1 + " °C"], ["Salida", d.depart],
           ["Punto 1", d.arrive1], ["Punto 2", d.arrive2], ["Retorno", d.returnTime]
         ];
 
-        const stages = STEPS.map((name, i) =>
+        const stages = tripSteps.map((name, i) =>
           `<div class="stage-box ${i < st || s.closed ? "done" : i === st ? "current" : ""}">
-             <b>${i < st || s.closed ? "✓" : i + 1}</b>${name}
+             <b>${i < st || s.closed ? "✓" : i + 1}</b>${esc(name)}
            </div>`).join("");
 
         const activity = events.length
@@ -1837,17 +1946,19 @@
               `<div class="incident-item"><small>${esc(x.time)} · ${esc(x.severity)}</small><b>${esc(x.type)}</b><span>${esc(x.description)}</span>${x.location ? `<span>📍 ${esc(x.location)}</span>` : ""}</div>`).join("")
           : '<div class="incident-info">Sin incidencias reportadas.</div>';
 
-        const evidenceHtml = (d.evidences || []).length
-          ? `<div class="monitor-section"><h3>Evidencias</h3>
-              <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-                ${(d.evidences || []).slice().reverse().map(e =>
-                  `<a href="${esc(e.url)}" target="_blank" style="text-decoration:none">
-                    <div class="incident-info"><b>📷 ${esc(e.stage || "Evidencia")}</b><br>${esc(e.time || "")}</div>
+        const evidenceItems = Array.isArray(d.evidences) ? d.evidences : [];
+        const evidenceHtml = evidenceItems.length
+          ? `<div class="monitor-section"><h3>${refrigerated ? "Registro fotográfico de ruta" : "Evidencias"}</h3>
+              <div class="doc-gallery">
+                ${evidenceItems.slice().reverse().map((e,i) =>
+                  `<a class="doc-thumb" href="${esc(e.url)}" target="_blank" style="text-decoration:none">
+                    <img src="${esc(e.url)}" alt="${esc(evidenceDescription(e,i))}">
+                    <small><b>${esc(evidenceDescription(e,i))}</b><br>${esc(e.time || "")}</small>
                   </a>`).join("")}
               </div></div>`
-          : "";
+          : `<div class="monitor-section"><h3>${refrigerated ? "Registro fotográfico de ruta" : "Evidencias"}</h3><div class="incident-info">Aún no se han recibido fotografías.</div></div>`;
 
-        const specialDocs = [
+        const specialDocs = refrigerated ? [] : [
           ...(d.departureDocument ? [{...d.departureDocument, label:"Documento de salida"}] : []),
           ...(d.receptionDocument1 ? [{...d.receptionDocument1, label:"Documento de recepción · Punto 1"}] : []),
           ...((Array.isArray(d.signedGuides1) ? d.signedGuides1 : []).map(x => ({...x, label:"Guía firmada · Punto 1"}))),
@@ -1865,6 +1976,7 @@
             <aside class="panel" onclick="event.stopPropagation()">
               <div class="monitor-head">
                 <div><div class="live-badge">${s.closed ? "VIAJE CERRADO" : "ACTUALIZANDO EN VIVO"}</div>
+                ${refrigerated ? '<span class="trip-type-badge refrigerated">❄ VIAJE REFRIGERADO</span>' : ''}
                 <h2>${esc(d.driver || "Transportista pendiente")}</h2>
                 <p>${esc(code)} · ${esc(d.plate || "Placa pendiente")}</p></div>
                 <div style="display:flex;gap:8px;align-items:center">
@@ -1873,8 +1985,8 @@
                 </div>
               </div>
               <div class="monitor-kpis">
-                <div><small>Avance</small><b>${s.closed ? 100 : Math.round((st + 1) * 12.5)}%</b></div>
-                <div><small>Etapa</small><b>${s.closed ? "Cerrado" : esc(STEPS[st])}</b></div>
+                <div><small>Avance</small><b>${pct}%</b></div>
+                <div><small>Etapa</small><b>${s.closed ? "Cerrado" : esc(tripSteps[st] || "Pendiente")}</b></div>
                 <div><small>Incidencias</small><b>${logs.length}</b></div>
               </div>
               <div class="stage-track">${stages}</div>
@@ -1942,13 +2054,21 @@
           "Punto 1": "Evidencia fotográfica · Punto 1",
           "Punto 2": "Evidencia fotográfica · Punto 2",
           "Retorno": "Evidencia de retorno y recepción",
-          "Cierre": "Evidencia de cierre del viaje"
+          "Cierre": "Evidencia de cierre del viaje",
+          "Llegada a planta para carga": "Llegada a planta para carga",
+          "Salida de planta cargado": "Salida de planta cargado",
+          "Punto 1 ruta": "Punto 1 ruta",
+          "Punto 2 ruta": "Punto 2 ruta",
+          "Punto 3 ruta": "Punto 3 ruta",
+          "Punto 4 ruta": "Punto 4 ruta",
+          "Punto 5 ruta": "Punto 5 ruta",
+          "Llegada de la carga": "Llegada de la carga"
         };
         return map[stage] || (stage ? `Evidencia fotográfica · ${stage}` : `Evidencia fotográfica ${index + 1}`);
       }
 
       function stageEvidenceGallery() {
-        const stageName = STEPS[step];
+        const stageName = stepsFor()[step];
         const stageEvidence = (Array.isArray(data.evidences) ? data.evidences : [])
           .filter(e => (e.stage || "") === stageName);
         return stageEvidence.length
@@ -2001,7 +2121,7 @@
           const { data: pub } = sb.storage.from("evidencias").getPublicUrl(path);
           const docItem = {
             url: pub.publicUrl, path, name: file.name, title,
-            stage: STEPS[step],
+            stage: stepsFor()[step],
             time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
           };
           if (multiple) {
@@ -2034,7 +2154,7 @@
           if (upErr) throw upErr;
           const { data: pub } = sb.storage.from("evidencias").getPublicUrl(path);
           data.evidences = Array.isArray(data.evidences) ? data.evidences : [];
-          const currentStageName = STEPS[step];
+          const currentStageName = stepsFor()[step];
           const stageLabels = {
             "Identificación": "Evidencia de identificación del viaje",
             "Preoperacional": "Evidencia del control preoperacional",
@@ -2043,7 +2163,15 @@
             "Punto 1": "Evidencia fotográfica · Punto 1",
             "Punto 2": "Evidencia fotográfica · Punto 2",
             "Retorno": "Evidencia de retorno y recepción",
-            "Cierre": "Evidencia de cierre del viaje"
+            "Cierre": "Evidencia de cierre del viaje",
+            "Llegada a planta para carga": "Llegada a planta para carga",
+            "Salida de planta cargado": "Salida de planta cargado",
+            "Punto 1 ruta": "Punto 1 ruta",
+            "Punto 2 ruta": "Punto 2 ruta",
+            "Punto 3 ruta": "Punto 3 ruta",
+            "Punto 4 ruta": "Punto 4 ruta",
+            "Punto 5 ruta": "Punto 5 ruta",
+            "Llegada de la carga": "Llegada de la carga"
           };
           data.evidences.push({
             url: pub.publicUrl,
@@ -2052,7 +2180,7 @@
             label: stageLabels[currentStageName] || `Evidencia fotográfica · ${currentStageName}`,
             time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
           });
-          logActivity("Evidencia agregada", STEPS[step]);
+          logActivity("Evidencia agregada", stepsFor()[step]);
           await saveNow();
           label.childNodes[0].textContent = "✓ Evidencia subida ";
           render();
@@ -2064,22 +2192,33 @@
 
       function render() {
         if (!token) return;
+        const tripSteps = stepsFor();
+        const refrigerated = isRefrigeratedState();
+        const lastStep = tripSteps.length - 1;
         $("tripCode").textContent = data.tripCode || "Viaje " + token.slice(0, 4);
-        $("progress").innerHTML = STEPS.map((_, i) => `<i class="${i <= step ? "done" : ""}"></i>`).join("");
-        $("stepLabel").textContent = `PASO ${step + 1} DE 8 · ${STEPS[step]}`;
-        $("stepTitle").textContent = [
-          "Identificación del transportista", "Unidad lista para cargar",
-          "Carga, estiba y seguridad", "Liberación de salida",
-          "Entrega Plaza Vea · P1", "Entrega Plaza Vea · P2",
-          "Regreso a La Dominga", "Resumen y cierre"
-        ][step];
-        $("nextButton").textContent = step === 7 ? "Cerrar viaje ✓" : "Continuar →";
+        $("progress").style.gridTemplateColumns = `repeat(${tripSteps.length}, 1fr)`;
+        $("progress").innerHTML = tripSteps.map((_, i) => `<i class="${i <= step ? "done" : ""}"></i>`).join("");
+        $("stepLabel").textContent = `PASO ${step + 1} DE ${tripSteps.length} · ${tripSteps[step]}`;
+        $("stepTitle").textContent = stepTitleFor(step);
+        $("nextButton").textContent = step === lastStep ? "Cerrar viaje ✓" : "Continuar →";
+
+        const routeText = document.querySelector("#wizard .wizard > div:nth-of-type(2) p");
+        if (routeText) routeText.textContent = refrigerated
+          ? "Registro refrigerado · 8 puntos de control fotográfico"
+          : "Piura → Chiclayo → Piura · 156 tortas · 75 jabas · 0–5 °C";
 
         let h = "";
         if (step === 0)
           h = field(["driver","Nombre completo del conductor","text","Nombres y apellidos"]) +
               `<div class="two">${field(["phone","Teléfono","tel","999 999 999"])}${field(["plate","Placa","text","ABC-123"])}</div>` +
               field(["helper","Auxiliar (opcional)"]);
+
+        if (refrigerated && step > 0) {
+          const stageName = tripSteps[step];
+          h = `<div class="photo-only-card"><b>📷 Registro únicamente fotográfico</b><small>En este punto no debes llenar datos adicionales. Toma una o varias fotos claras de <strong>${esc(stageName)}</strong>. Debes subir al menos una fotografía para continuar.</small></div>${photo()}`;
+          $("formCard").innerHTML = h;
+          return;
+        }
 
         if (step === 1)
           h = '<div class="section-intro"><i>✓</i><div><b>Inspección preoperacional</b><small>Revisa cada punto con la unidad detenida y en condiciones seguras.</small></div></div>' +
@@ -2132,8 +2271,18 @@
 
       function valid() {
         let m = "";
+        const tripSteps = stepsFor();
         if (step === 0 && (!data.driver || !data.phone || !data.plate))
           m = "Completa conductor, teléfono y placa.";
+
+        if (isRefrigeratedState() && step > 0) {
+          const stageName = tripSteps[step];
+          const photos = (Array.isArray(data.evidences) ? data.evidences : []).filter(e => (e.stage || "") === stageName);
+          if (!photos.length) m = `Sube al menos una foto de ${stageName} para continuar.`;
+          showMessage(m);
+          return !m;
+        }
+
         if (step === 1 && (!data.temp0 || [1,2,3,4,5,6].some(n => !data["c"+n])))
           m = "Completa todos los controles y la temperatura.";
         if (step === 2 && (!data.temp1 || [7,8,9].some(n => !data["c"+n])))
@@ -2153,13 +2302,15 @@
 
       async function nextStep() {
         if (!valid()) return;
-        if (step < 7) {
-          const completed = STEPS[step];
+        const tripSteps = stepsFor();
+        const lastStep = tripSteps.length - 1;
+        if (step < lastStep) {
+          const completed = tripSteps[step];
           step++;
           activityLog.unshift({
             action: "Etapa completada",
-            detail: `${completed} → ${STEPS[step]}`,
-            stage: STEPS[step],
+            detail: `${completed} → ${tripSteps[step]}`,
+            stage: tripSteps[step],
             time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
           });
           await saveNow();
@@ -2239,7 +2390,7 @@
           type, severity, description,
           location: $("incLocation").value.trim(),
           action: $("incAction").value.trim(),
-          stage: STEPS[step],
+          stage: stepsFor()[step],
           time: new Date().toLocaleString("es-PE", { dateStyle:"short", timeStyle:"short" })
         };
 
@@ -2260,7 +2411,7 @@
               data.evidences.push({
                 url: pub.publicUrl,
                 path,
-                stage: "Incidencia · " + STEPS[step],
+                stage: "Incidencia · " + stepsFor()[step],
                 label: "Evidencia de incidencia · " + type,
                 time: item.time
               });
@@ -2271,7 +2422,7 @@
         activityLog.unshift({
           action: "Incidencia reportada",
           detail: severity + " · " + type,
-          stage: STEPS[step],
+          stage: stepsFor()[step],
           time: item.time
         });
 
