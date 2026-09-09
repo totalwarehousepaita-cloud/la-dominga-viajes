@@ -1668,8 +1668,30 @@
               URL.revokeObjectURL(objectUrl);
             }
           } catch (e) {
-            console.error("No se pudo incrustar evidencia en PDF", e);
-            return null;
+            // Fallback para URLs públicas antiguas: intenta cargar la imagen directamente.
+            try {
+              const img = await new Promise((resolve, reject) => {
+                const el = new Image();
+                el.crossOrigin = "anonymous";
+                el.onload = () => resolve(el);
+                el.onerror = reject;
+                el.src = url + (url.includes("?") ? "&" : "?") + "pdf=1";
+              });
+              const naturalW = img.naturalWidth || img.width;
+              const naturalH = img.naturalHeight || img.height;
+              const scale = Math.min(1, maxSide / Math.max(naturalW, naturalH));
+              const canvas = document.createElement("canvas");
+              canvas.width = Math.max(1, Math.round(naturalW * scale));
+              canvas.height = Math.max(1, Math.round(naturalH * scale));
+              const ctx = canvas.getContext("2d", { alpha: false });
+              ctx.fillStyle = "#ffffff";
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+              return { data: canvas.toDataURL("image/jpeg", quality), width: canvas.width, height: canvas.height };
+            } catch (fallbackError) {
+              console.error("No se pudo incrustar evidencia en PDF", e, fallbackError);
+              return null;
+            }
           }
         })();
 
@@ -1705,12 +1727,18 @@
         const evidences = Array.isArray(d.evidences) ? d.evidences : [];
         const refrigerated = isRefrigeratedState(s);
         const tripSteps = stepsFor(s);
+        // V19: documentos compatibles con versiones antiguas (objeto único) y nuevas (arrays).
+        // V17 convirtió los documentos a arrays; tratarlos como objeto hacía que se perdiera `url` en el PDF.
+        const docItems = (value, label) => {
+          const list = Array.isArray(value) ? value : (value ? [value] : []);
+          return list.filter(Boolean).map(x => ({ ...x, label }));
+        };
         const specialDocuments = refrigerated ? [] : [
-          ...(d.departureDocument ? [{...d.departureDocument, label:"Documento de salida"}] : []),
-          ...(d.receptionDocument1 ? [{...d.receptionDocument1, label:"Documento de recepción · Punto 1"}] : []),
-          ...((Array.isArray(d.signedGuides1) ? d.signedGuides1 : []).map(x => ({...x, label:"Guía firmada · Punto 1"}))),
-          ...(d.receptionDocument2 ? [{...d.receptionDocument2, label:"Documento de recepción · Punto 2"}] : []),
-          ...((Array.isArray(d.signedGuides2) ? d.signedGuides2 : []).map(x => ({...x, label:"Guía firmada · Punto 2"})))
+          ...docItems(d.departureDocument, "Documento de salida"),
+          ...docItems(d.receptionDocument1, "Documento de recepción · Punto 1"),
+          ...docItems(d.signedGuides1, "Guía firmada · Punto 1"),
+          ...docItems(d.receptionDocument2, "Documento de recepción · Punto 2"),
+          ...docItems(d.signedGuides2, "Guía firmada · Punto 2")
         ];
         const code = tripCode || d.tripCode || (t ? (refrigerated ? "RF-" : "LD-") + t.slice(0, 4) : "Viaje");
         const currentStage = s.closed ? "Cerrado" : (tripSteps[st] || "Pendiente");
@@ -1856,7 +1884,7 @@
           const safeTitle = pdfSafe(title || 'Evidencia fotográfica');
           const titleLines = doc.splitTextToSize(safeTitle, contentW);
           const titleH = Math.max(5, titleLines.length * 4.2);
-          const dateText = pdfSafe((item && item.time) || 'Fecha no registrada');
+          const dateText = pdfSafe((item && (item.time || item.createdAt || item.uploadedAt || item.date)) || 'Sin fecha registrada');
           const dateH = 4;
 
           let imgW = 0, imgH = 0;
@@ -2045,12 +2073,16 @@
               </div></div>`
           : `<div class="monitor-section"><h3>${refrigerated ? "Registro fotográfico de ruta" : "Evidencias"}</h3><div class="incident-info">Aún no se han recibido fotografías.</div></div>`;
 
+        const ownerDocItems = (value, label) => {
+          const list = Array.isArray(value) ? value : (value ? [value] : []);
+          return list.filter(Boolean).map(x => ({ ...x, label }));
+        };
         const specialDocs = refrigerated ? [] : [
-          ...(d.departureDocument ? [{...d.departureDocument, label:"Documento de salida"}] : []),
-          ...(d.receptionDocument1 ? [{...d.receptionDocument1, label:"Documento de recepción · Punto 1"}] : []),
-          ...((Array.isArray(d.signedGuides1) ? d.signedGuides1 : []).map(x => ({...x, label:"Guía firmada · Punto 1"}))),
-          ...(d.receptionDocument2 ? [{...d.receptionDocument2, label:"Documento de recepción · Punto 2"}] : []),
-          ...((Array.isArray(d.signedGuides2) ? d.signedGuides2 : []).map(x => ({...x, label:"Guía firmada · Punto 2"})))
+          ...ownerDocItems(d.departureDocument, "Documento de salida"),
+          ...ownerDocItems(d.receptionDocument1, "Documento de recepción · Punto 1"),
+          ...ownerDocItems(d.signedGuides1, "Guía firmada · Punto 1"),
+          ...ownerDocItems(d.receptionDocument2, "Documento de recepción · Punto 2"),
+          ...ownerDocItems(d.signedGuides2, "Guía firmada · Punto 2")
         ];
         const documentsHtml = specialDocs.length
           ? `<div class="monitor-section"><h3>Documentos operativos</h3><div class="doc-gallery">${specialDocs.map(x =>
