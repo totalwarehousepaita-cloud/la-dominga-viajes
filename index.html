@@ -1012,6 +1012,16 @@
         input, select, textarea { font-size:16px !important; }
       }
 
+      .doc-thumb { position:relative; }
+      .evidence-remove {
+        position:absolute; top:7px; right:7px; width:30px; height:30px; border:0;
+        border-radius:999px; background:rgba(15,23,42,.82); color:#fff; font-size:20px;
+        line-height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+        box-shadow:0 4px 12px rgba(0,0,0,.18); z-index:3; padding:0;
+      }
+      .evidence-remove:hover { background:#b91c1c; }
+      .evidence-remove:disabled { opacity:.55; cursor:wait; }
+
       @media (max-width: 420px) {
         .professional-top .wrap { width:calc(100% - 16px); }
         .brand small { display:none; }
@@ -1034,7 +1044,7 @@
         <div class="brand-lockup">
           <img class="brand-logo-img" src="./logo.png" alt="05TEAM" />
           <div class="brand">
-            <b>La Dominga Viajes</b><small>05TEAM · Control de operaciones</small>
+            <b>Operaciones Logísticas</b><small>05TEAM · Control de operaciones</small>
           </div>
         </div>
         <span class="online">● En línea</span>
@@ -2069,18 +2079,24 @@
 
       function stageEvidenceGallery() {
         const stageName = stepsFor()[step];
-        const stageEvidence = (Array.isArray(data.evidences) ? data.evidences : [])
-          .filter(e => (e.stage || "") === stageName);
+        const all = Array.isArray(data.evidences) ? data.evidences : [];
+        const stageEvidence = all
+          .map((e, originalIndex) => ({ e, originalIndex }))
+          .filter(item => ((item.e && item.e.stage) || "") === stageName);
         return stageEvidence.length
-          ? `<div class="doc-gallery">${stageEvidence.map((e,i) => `<div class="doc-thumb"><img src="${esc(e.url)}" alt="${esc(evidenceDescription(e,i))}"><small><b>${esc(evidenceDescription(e,i))}</b><br>✓ ${esc(e.time || "Subida")}</small></div>`).join("")}</div>`
+          ? `<div class="doc-gallery">${stageEvidence.map((item,i) => { const e = item.e || {}; return `<div class="doc-thumb">
+              <button type="button" class="evidence-remove" title="Quitar esta foto" aria-label="Quitar esta foto" onclick="removeEvidence(${item.originalIndex}, this)">×</button>
+              <img src="${esc(e.url)}" alt="${esc(evidenceDescription(e,i))}">
+              <small><b>${esc(evidenceDescription(e,i))}</b><br>✓ ${esc(e.time || "Subida")}</small>
+            </div>`; }).join("")}</div>`
           : `<div style="font-size:12px;color:var(--muted);margin-top:8px">Aún no hay evidencias fotográficas en esta etapa.</div>`;
       }
 
       function photo() {
         return `<div class="doc-upload evidence-upload">
-          <div class="doc-upload-head"><span class="doc-upload-icon">📷</span><div><b>Evidencias fotográficas</b><small>Toma una o varias fotos. Cada imagen subida aparecerá inmediatamente aquí para que puedas comprobarla.</small></div></div>
-          <label class="photo">📷 Tomar foto de evidencia
-            <input type="file" accept="image/*" capture="environment" onchange="uploadEvidence(this)">
+          <div class="doc-upload-head"><span class="doc-upload-icon">📷</span><div><b>Evidencias fotográficas</b><small>Puedes subir todas las fotos que necesites. Si alguna no quedó bien, elimínala con la × y toma otra.</small></div></div>
+          <label class="photo">📷 Tomar o seleccionar fotos
+            <input type="file" accept="image/*" capture="environment" multiple onchange="uploadEvidence(this)">
           </label>
           ${stageEvidenceGallery()}
         </div>`;
@@ -2140,53 +2156,83 @@
       }
 
       async function uploadEvidence(input) {
-        const file = input.files?.[0];
-        if (!file || !configured()) return;
+        const files = Array.from(input.files || []);
+        if (!files.length || !configured()) return;
         const label = input.closest(".photo");
-        const oldText = label.childNodes[0]?.textContent || "";
+        const currentStageName = stepsFor()[step];
+        const stageLabels = {
+          "Identificación": "Evidencia de identificación del viaje",
+          "Preoperacional": "Evidencia del control preoperacional",
+          "Carga": "Evidencia de carga y estiba",
+          "Salida": "Evidencia fotográfica de salida",
+          "Punto 1": "Evidencia fotográfica · Punto 1",
+          "Punto 2": "Evidencia fotográfica · Punto 2",
+          "Retorno": "Evidencia de retorno y recepción",
+          "Cierre": "Evidencia de cierre del viaje",
+          "Llegada a planta para carga": "Llegada a planta para carga",
+          "Salida de planta cargado": "Salida de planta cargado",
+          "Punto 1 ruta": "Punto 1 ruta",
+          "Punto 2 ruta": "Punto 2 ruta",
+          "Punto 3 ruta": "Punto 3 ruta",
+          "Punto 4 ruta": "Punto 4 ruta",
+          "Punto 5 ruta": "Punto 5 ruta",
+          "Llegada de la carga": "Llegada de la carga"
+        };
+        let uploaded = 0;
         try {
-          label.childNodes[0].textContent = "⏳ Subiendo evidencia ";
-          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const path = `${token}/${Date.now()}_${safeName}`;
-          const { error: upErr } = await sb.storage.from("evidencias").upload(path, file, {
-            cacheControl: "3600", upsert: false
-          });
-          if (upErr) throw upErr;
-          const { data: pub } = sb.storage.from("evidencias").getPublicUrl(path);
+          label.childNodes[0].textContent = `⏳ Subiendo ${files.length === 1 ? "evidencia" : files.length + " evidencias"} `;
           data.evidences = Array.isArray(data.evidences) ? data.evidences : [];
-          const currentStageName = stepsFor()[step];
-          const stageLabels = {
-            "Identificación": "Evidencia de identificación del viaje",
-            "Preoperacional": "Evidencia del control preoperacional",
-            "Carga": "Evidencia de carga y estiba",
-            "Salida": "Evidencia fotográfica de salida",
-            "Punto 1": "Evidencia fotográfica · Punto 1",
-            "Punto 2": "Evidencia fotográfica · Punto 2",
-            "Retorno": "Evidencia de retorno y recepción",
-            "Cierre": "Evidencia de cierre del viaje",
-            "Llegada a planta para carga": "Llegada a planta para carga",
-            "Salida de planta cargado": "Salida de planta cargado",
-            "Punto 1 ruta": "Punto 1 ruta",
-            "Punto 2 ruta": "Punto 2 ruta",
-            "Punto 3 ruta": "Punto 3 ruta",
-            "Punto 4 ruta": "Punto 4 ruta",
-            "Punto 5 ruta": "Punto 5 ruta",
-            "Llegada de la carga": "Llegada de la carga"
-          };
-          data.evidences.push({
-            url: pub.publicUrl,
-            path,
-            stage: currentStageName,
-            label: stageLabels[currentStageName] || `Evidencia fotográfica · ${currentStageName}`,
-            time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
-          });
-          logActivity("Evidencia agregada", stepsFor()[step]);
+          for (const file of files) {
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const path = `${token}/${Date.now()}_${Math.random().toString(36).slice(2,7)}_${safeName}`;
+            const { error: upErr } = await sb.storage.from("evidencias").upload(path, file, {
+              cacheControl: "3600", upsert: false
+            });
+            if (upErr) throw upErr;
+            const { data: pub } = sb.storage.from("evidencias").getPublicUrl(path);
+            data.evidences.push({
+              url: pub.publicUrl,
+              path,
+              stage: currentStageName,
+              label: stageLabels[currentStageName] || `Evidencia fotográfica · ${currentStageName}`,
+              time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
+            });
+            uploaded++;
+          }
+          logActivity("Evidencia agregada", `${currentStageName} · ${uploaded} foto${uploaded === 1 ? "" : "s"}`);
           await saveNow();
-          label.childNodes[0].textContent = "✓ Evidencia subida ";
+          label.childNodes[0].textContent = `✓ ${uploaded} foto${uploaded === 1 ? "" : "s"} subida${uploaded === 1 ? "" : "s"} `;
+          input.value = "";
           render();
         } catch (e) {
           console.error(e);
-          label.childNodes[0].textContent = "⚠ No se pudo subir. Reintentar ";
+          if (uploaded) await saveNow();
+          label.childNodes[0].textContent = uploaded
+            ? `⚠ Se subieron ${uploaded}; una foto falló. Reintentar `
+            : "⚠ No se pudo subir. Reintentar ";
+          input.value = "";
+          render();
+        }
+      }
+
+      async function removeEvidence(index, button) {
+        data.evidences = Array.isArray(data.evidences) ? data.evidences : [];
+        const item = data.evidences[index];
+        if (!item) return;
+        if (button) { button.disabled = true; button.textContent = "…"; }
+        try {
+          if (item.path) {
+            const { error } = await sb.storage.from("evidencias").remove([item.path]);
+            if (error) console.warn("No se pudo borrar el archivo de Storage, se quitará del reporte igualmente:", error);
+          }
+          data.evidences.splice(index, 1);
+          logActivity("Evidencia eliminada", item.stage || stepsFor()[step]);
+          await saveNow();
+          render();
+        } catch (e) {
+          console.error(e);
+          if (button) { button.disabled = false; button.textContent = "×"; }
+          alert("No se pudo quitar la foto. Intenta nuevamente.");
         }
       }
 
@@ -2211,7 +2257,8 @@
         if (step === 0)
           h = field(["driver","Nombre completo del conductor","text","Nombres y apellidos"]) +
               `<div class="two">${field(["phone","Teléfono","tel","999 999 999"])}${field(["plate","Placa","text","ABC-123"])}</div>` +
-              field(["helper","Auxiliar (opcional)"]);
+              field(["helper","Auxiliar (opcional)"]) +
+              (!refrigerated ? photo() : "");
 
         if (refrigerated && step > 0) {
           const stageName = tripSteps[step];
@@ -2253,7 +2300,7 @@
             ["Incidencias",incidents]
           ];
           h = '<div class="summary">' + rows.map(r =>
-            `<div><small>${r[0]}</small><b>${esc(r[1] || "—")}</b></div>`).join("") + "</div>";
+            `<div><small>${r[0]}</small><b>${esc(r[1] || "—")}</b></div>`).join("") + "</div>" + (!refrigerated ? photo() : "");
         }
 
         $("formCard").innerHTML = h;
