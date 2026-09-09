@@ -1067,6 +1067,33 @@
       @media(max-width:900px){.visual-dashboard,.dashboard-bottom{grid-template-columns:1fr}.donut-wrap{grid-template-columns:140px 1fr}}
       @media(max-width:520px){.state-row{grid-template-columns:88px 1fr 28px;gap:7px}.visual-card,.dashboard-list-card{padding:14px}.donut-wrap{grid-template-columns:1fr;justify-items:center}.donut-legend{width:100%}}
 
+
+      /* V21 · Navegación por módulos + dashboard de tiempos */
+      .owner-shell{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 74px)}
+      .owner-sidebar{background:#083d20;color:#fff;padding:22px 14px;position:sticky;top:0;height:calc(100vh - 74px);align-self:start}
+      .sidebar-title{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#9bd1aa;font-weight:900;padding:0 10px 12px}
+      .side-nav{display:grid;gap:8px}
+      .side-nav button{border:0;background:transparent;color:#d8eddd;border-radius:12px;padding:12px 13px;text-align:left;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:10px}
+      .side-nav button:hover{background:rgba(255,255,255,.08)}
+      .side-nav button.active{background:#fff;color:#075824;box-shadow:0 7px 20px rgba(0,0,0,.16)}
+      .sidebar-foot{margin-top:22px;border-top:1px solid rgba(255,255,255,.15);padding:14px 10px 0;color:#a9cdb2;font-size:11px;line-height:1.5}
+      .owner-main{min-width:0}
+      .owner-page{display:none}.owner-page.active{display:block}
+      .mobile-module-nav{display:none;background:#fff;border-bottom:1px solid var(--line);padding:8px;gap:8px;position:sticky;top:0;z-index:20}
+      .mobile-module-nav button{flex:1;border:1px solid var(--line);background:#fff;color:var(--deep);border-radius:10px;padding:10px;font-weight:900}
+      .mobile-module-nav button.active{background:var(--deep);color:#fff;border-color:var(--deep)}
+      .page-heading{padding:30px 0 10px}.page-heading h1{margin:5px 0 6px;color:var(--deep);font-size:clamp(28px,4vw,38px)}.page-heading p{margin:0;color:var(--muted)}
+      .time-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:14px 0}
+      .time-kpi{background:#fff;border:1px solid var(--line);border-radius:17px;padding:17px;box-shadow:0 7px 20px rgba(8,54,28,.05)}
+      .time-kpi small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:900;letter-spacing:.04em}.time-kpi b{display:block;color:#0b4f27;font-size:25px;margin:7px 0 4px}.time-kpi span{font-size:11px;color:#718079}
+      .performance-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin:14px 0}
+      .duration-list{display:grid;gap:10px}.duration-row{display:grid;grid-template-columns:120px 1fr 62px;gap:10px;align-items:center;font-size:11px}.duration-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:800;color:#395246}.duration-track{height:11px;background:#edf4ef;border-radius:999px;overflow:hidden}.duration-fill{height:100%;background:linear-gradient(90deg,#168aad,#46b9de);border-radius:999px}.duration-value{text-align:right;font-weight:900;color:#17452c}
+      .health-list{display:grid;gap:9px}.health-item{display:flex;align-items:center;justify-content:space-between;border:1px solid #e2ece5;border-radius:12px;padding:11px 12px;background:#fbfdfb}.health-left{display:flex;gap:9px;align-items:center}.health-dot{width:10px;height:10px;border-radius:50%}.health-dot.green{background:#22c55e}.health-dot.yellow{background:#f59e0b}.health-dot.red{background:#ef4444}.health-item b{font-size:12px;color:#244631}.health-item span{font-size:11px;color:var(--muted)}
+      .dashboard-note{font-size:11px;color:#718079;margin-top:8px}
+      @media(max-width:1000px){.owner-shell{grid-template-columns:190px 1fr}.time-kpis{grid-template-columns:repeat(2,1fr)}}
+      @media(max-width:760px){.owner-shell{display:block}.owner-sidebar{display:none}.mobile-module-nav{display:flex}.performance-grid{grid-template-columns:1fr}.time-kpis{grid-template-columns:1fr 1fr}.owner-main .wrap{width:calc(100% - 20px)}}
+      @media(max-width:440px){.time-kpis{grid-template-columns:1fr}.duration-row{grid-template-columns:92px 1fr 54px}}
+
     </style>
   </head>
   <body>
@@ -1074,88 +1101,117 @@
       <header class="top professional-top">
         <div class="brand-lockup">
           <img class="brand-logo-img" src="./logo.png" alt="05TEAM" />
-          <div class="brand">
-            <b>Operaciones Logísticas</b><small>05TEAM · Control de operaciones</small>
-          </div>
+          <div class="brand"><b>Operaciones Logísticas</b><small>05TEAM · Control de operaciones</small></div>
         </div>
         <span class="online">● En línea</span>
       </header>
-      <main class="wrap">
-        <section class="hero">
-          <div class="eyebrow">CENTRO DE CONTROL · 05TEAM</div>
-          <h1>Control de operaciones</h1>
-          <p>Gestiona viajes, incidencias, evidencias y reportes desde un solo lugar.</p>
-        </section>
-        <div class="create-grid">
-          <section class="create">
-            <div>
-              <div class="eyebrow" style="color: #b9edc1">NUEVA ASIGNACIÓN</div>
-              <h2>Crear viaje para La Dominga</h2>
-              <p>Flujo operativo completo con controles, documentos y evidencias.</p>
-            </div>
-            <button class="primary" onclick="createTrip('normal')">Crear viaje para La Dominga →</button>
+      <div class="mobile-module-nav">
+        <button id="mobileDashBtn" class="active" onclick="switchOwnerView('dashboard')">📊 Dashboard</button>
+        <button id="mobileTripsBtn" onclick="switchOwnerView('trips')">🚚 Viajes</button>
+      </div>
+      <div class="owner-shell">
+        <aside class="owner-sidebar">
+          <div class="sidebar-title">Módulos</div>
+          <nav class="side-nav">
+            <button id="sideDashBtn" class="active" onclick="switchOwnerView('dashboard')">📊 <span>Dashboard</span></button>
+            <button id="sideTripsBtn" onclick="switchOwnerView('trips')">🚚 <span>Viajes</span></button>
+          </nav>
+          <div class="sidebar-foot">05TEAM<br>Centro de control logístico<br><br>Los indicadores se actualizan con los viajes registrados.</div>
+        </aside>
+        <div class="owner-main">
+          <section id="dashboardPage" class="owner-page active">
+            <main class="wrap">
+              <section class="page-heading">
+                <div class="eyebrow">CENTRO DE CONTROL · 05TEAM</div>
+                <h1>Dashboard de operaciones</h1>
+                <p>Indicadores, tiempos, alertas y comportamiento general de la operación.</p>
+              </section>
+              <section class="dashboard-kpis">
+                <div class="dash-kpi"><small>Viajes activos</small><b id="activeCount">0</b><span id="activeText">Sin operaciones</span></div>
+                <div class="dash-kpi"><small>Finalizados</small><b id="closedCount">0</b><span>Operaciones cerradas</span></div>
+                <div class="dash-kpi alert"><small>Con incidencia</small><b id="incidentTripCount">0</b><span id="incidentCount" style="display:none">0</span><span>Requieren atención</span></div>
+                <div class="dash-kpi cold"><small>Refrigerados</small><b id="refrigeratedCount">0</b><span>Viajes registrados</span></div>
+                <div class="dash-kpi"><small>La Dominga</small><b id="domingaCount">0</b><span>Viajes registrados</span></div>
+                <span id="stageCount" style="display:none">0/8</span><span id="stageText" style="display:none">Sin actividad</span>
+              </section>
+
+              <section class="time-kpis">
+                <div class="time-kpi"><small>Duración registrada promedio</small><b id="avgClosedDuration">—</b><span>Viajes finalizados</span></div>
+                <div class="time-kpi"><small>Promedio sin actualización</small><b id="avgInactiveTime">—</b><span>Viajes actualmente activos</span></div>
+                <div class="time-kpi"><small>Actualizados en últimas 2 h</small><b id="recentUpdateRate">—</b><span>Sobre viajes activos</span></div>
+                <div class="time-kpi"><small>Mayor tiempo sin actualización</small><b id="maxInactiveTime">—</b><span>Operación activa</span></div>
+              </section>
+
+              <section class="visual-dashboard">
+                <article class="visual-card">
+                  <div class="visual-card-head"><div><h3>Estado de las operaciones</h3><p>Vista rápida de la carga operativa actual.</p></div><span class="online" style="font-size:10px">● En vivo</span></div>
+                  <div class="state-bars">
+                    <div class="state-row"><span>En curso</span><div class="state-track"><div class="state-fill active" id="barActive"></div></div><b class="state-value" id="barActiveValue">0</b></div>
+                    <div class="state-row"><span>Finalizados</span><div class="state-track"><div class="state-fill closed" id="barClosed"></div></div><b class="state-value" id="barClosedValue">0</b></div>
+                    <div class="state-row"><span>Con alerta</span><div class="state-track"><div class="state-fill incident" id="barIncident"></div></div><b class="state-value" id="barIncidentValue">0</b></div>
+                  </div>
+                </article>
+                <article class="visual-card">
+                  <div class="visual-card-head"><div><h3>Tipos de viaje</h3><p>Distribución total de las operaciones.</p></div></div>
+                  <div class="donut-wrap">
+                    <div class="donut" id="tripTypeDonut"><div class="donut-center"><b id="donutTotal">0</b><span>viajes</span></div></div>
+                    <div class="donut-legend">
+                      <div class="legend-row"><span class="legend-label"><i class="legend-dot cold"></i>Refrigerado</span><b id="legendCold">0</b></div>
+                      <div class="legend-row"><span class="legend-label"><i class="legend-dot dominga"></i>La Dominga</span><b id="legendDominga">0</b></div>
+                    </div>
+                  </div>
+                </article>
+              </section>
+
+              <section class="performance-grid">
+                <article class="visual-card">
+                  <div class="visual-card-head"><div><h3>Duración de viajes finalizados</h3><p>Últimas operaciones cerradas, comparadas por duración registrada.</p></div></div>
+                  <div id="durationChart" class="duration-list"><div class="dashboard-empty">Aún no hay viajes finalizados para comparar.</div></div>
+                  <div class="dashboard-note">La duración se calcula entre la creación del viaje y su última actualización registrada.</div>
+                </article>
+                <article class="visual-card">
+                  <div class="visual-card-head"><div><h3>Salud de operaciones activas</h3><p>Basado en cuánto tiempo llevan sin una nueva actualización.</p></div></div>
+                  <div id="operationHealth" class="health-list"><div class="dashboard-empty">No hay viajes activos.</div></div>
+                </article>
+              </section>
+
+              <section class="dashboard-bottom">
+                <article class="dashboard-list-card"><h3>Alertas prioritarias</h3><p>Operaciones que necesitan atención.</p><div id="priorityAlerts" class="priority-list"><div class="dashboard-empty">Sin alertas pendientes.</div></div></article>
+                <article class="dashboard-list-card"><h3>Actividad reciente</h3><p>Últimos movimientos registrados por los transportistas.</p><div id="recentActivity" class="recent-list"><div class="dashboard-empty">Todavía no hay actividad.</div></div></article>
+              </section>
+            </main>
           </section>
-          <section class="create refrigerated">
-            <div>
-              <div class="eyebrow">NUEVA ASIGNACIÓN REFRIGERADA</div>
-              <h2>Crear viaje refrigerado</h2>
-              <p>Identificación del transportista y 8 puntos de ruta registrados únicamente con fotos.</p>
-            </div>
-            <button class="primary refrigerated-btn" onclick="createTrip('refrigerated')">Crear viaje refrigerado →</button>
-          </section>
-        </div>
-        <section class="dashboard-kpis">
-          <div class="dash-kpi"><small>Viajes activos</small><b id="activeCount">0</b><span id="activeText">Sin operaciones</span></div>
-          <div class="dash-kpi"><small>Finalizados</small><b id="closedCount">0</b><span>Operaciones cerradas</span></div>
-          <div class="dash-kpi alert"><small>Con incidencia</small><b id="incidentTripCount">0</b><span id="incidentCount" style="display:none">0</span><span>Requieren atención</span></div>
-          <div class="dash-kpi cold"><small>Refrigerados</small><b id="refrigeratedCount">0</b><span>Viajes registrados</span></div>
-          <div class="dash-kpi"><small>La Dominga</small><b id="domingaCount">0</b><span>Viajes registrados</span></div>
-          <span id="stageCount" style="display:none">0/8</span><span id="stageText" style="display:none">Sin actividad</span>
-        </section>
-        <section class="visual-dashboard">
-          <article class="visual-card">
-            <div class="visual-card-head"><div><h3>Estado de las operaciones</h3><p>Vista rápida de la carga operativa actual.</p></div><span class="online" style="font-size:10px">● En vivo</span></div>
-            <div class="state-bars">
-              <div class="state-row"><span>En curso</span><div class="state-track"><div class="state-fill active" id="barActive"></div></div><b class="state-value" id="barActiveValue">0</b></div>
-              <div class="state-row"><span>Finalizados</span><div class="state-track"><div class="state-fill closed" id="barClosed"></div></div><b class="state-value" id="barClosedValue">0</b></div>
-              <div class="state-row"><span>Con alerta</span><div class="state-track"><div class="state-fill incident" id="barIncident"></div></div><b class="state-value" id="barIncidentValue">0</b></div>
-            </div>
-          </article>
-          <article class="visual-card">
-            <div class="visual-card-head"><div><h3>Tipos de viaje</h3><p>Distribución total de las operaciones.</p></div></div>
-            <div class="donut-wrap">
-              <div class="donut" id="tripTypeDonut"><div class="donut-center"><b id="donutTotal">0</b><span>viajes</span></div></div>
-              <div class="donut-legend">
-                <div class="legend-row"><span class="legend-label"><i class="legend-dot cold"></i>Refrigerado</span><b id="legendCold">0</b></div>
-                <div class="legend-row"><span class="legend-label"><i class="legend-dot dominga"></i>La Dominga</span><b id="legendDominga">0</b></div>
+
+          <section id="tripsPage" class="owner-page">
+            <main class="wrap">
+              <section class="page-heading">
+                <div class="eyebrow">GESTIÓN OPERATIVA</div>
+                <h1>Viajes</h1>
+                <p>Crea operaciones y revisa su avance, evidencias, incidencias y reportes.</p>
+              </section>
+              <div class="create-grid">
+                <section class="create">
+                  <div><div class="eyebrow" style="color:#b9edc1">NUEVA ASIGNACIÓN</div><h2>Crear viaje para La Dominga</h2><p>Flujo operativo completo con controles, documentos y evidencias.</p></div>
+                  <button class="primary" onclick="createTrip('normal')">Crear viaje para La Dominga →</button>
+                </section>
+                <section class="create refrigerated">
+                  <div><div class="eyebrow">NUEVA ASIGNACIÓN REFRIGERADA</div><h2>Crear viaje refrigerado</h2><p>Identificación del transportista y 8 puntos de ruta registrados únicamente con fotos.</p></div>
+                  <button class="primary refrigerated-btn" onclick="createTrip('refrigerated')">Crear viaje refrigerado →</button>
+                </section>
               </div>
-            </div>
-          </article>
-        </section>
-        <section class="dashboard-bottom">
-          <article class="dashboard-list-card"><h3>Alertas prioritarias</h3><p>Operaciones que necesitan atención.</p><div id="priorityAlerts" class="priority-list"><div class="dashboard-empty">Sin alertas pendientes.</div></div></article>
-          <article class="dashboard-list-card"><h3>Actividad reciente</h3><p>Últimos movimientos registrados por los transportistas.</p><div id="recentActivity" class="recent-list"><div class="dashboard-empty">Todavía no hay actividad.</div></div></article>
-        </section>
-        <section class="ops-filters">
-          <input class="filter-search" id="filterSearch" placeholder="Buscar cliente, placa, conductor o código…" oninput="applyOwnerFilters()">
-          <select id="filterType" onchange="applyOwnerFilters()"><option value="all">Todos los tipos</option><option value="normal">La Dominga</option><option value="refrigerated">Refrigerado</option></select>
-          <select id="filterStatus" onchange="applyOwnerFilters()"><option value="all">Todos los estados</option><option value="active">Activos</option><option value="closed">Finalizados</option><option value="incident">Con incidencia</option></select>
-          <input id="filterDate" type="date" onchange="applyOwnerFilters()">
-          <button class="secondary" onclick="clearOwnerFilters()">Limpiar</button>
-        </section>
-        <div class="section-title">
-          <div class="eyebrow">SEGUIMIENTO EN VIVO</div>
-          <h2>Operaciones</h2>
+              <section class="ops-filters">
+                <input class="filter-search" id="filterSearch" placeholder="Buscar cliente, placa, conductor o código…" oninput="applyOwnerFilters()">
+                <select id="filterType" onchange="applyOwnerFilters()"><option value="all">Todos los tipos</option><option value="normal">La Dominga</option><option value="refrigerated">Refrigerado</option></select>
+                <select id="filterStatus" onchange="applyOwnerFilters()"><option value="all">Todos los estados</option><option value="active">Activos</option><option value="closed">Finalizados</option><option value="incident">Con incidencia</option></select>
+                <input id="filterDate" type="date" onchange="applyOwnerFilters()">
+                <button class="secondary" onclick="clearOwnerFilters()">Limpiar</button>
+              </section>
+              <div class="section-title"><div class="eyebrow">SEGUIMIENTO EN VIVO</div><h2>Operaciones</h2></div>
+              <div id="tripList" class="empty"><b>No hay viajes creados</b><span>El primer viaje aparecerá aquí.</span></div>
+            </main>
+          </section>
         </div>
-        <div id="tripList" class="empty">
-          <b>No hay viajes creados</b
-          ><span>El primer viaje aparecerá aquí.</span>
-        </div>
-      </main>
-      <nav class="nav">
-        <button>⌂ Resumen</button><button>▤ Viajes</button
-        ><button>⚠ Incidencias</button>
-      </nav>
+      </div>
     </div>
     <div id="wizard" class="hidden">
       <header class="top professional-top">
@@ -1531,9 +1587,64 @@
         } else {
           await renderOwner();
           subscribeOwner();
+          try { switchOwnerView(sessionStorage.getItem("05teamOwnerView") || "dashboard"); } catch(e) { switchOwnerView("dashboard"); }
         }
       }
 
+
+      function switchOwnerView(view) {
+        const dashboard = view !== "trips";
+        if ($("dashboardPage")) $("dashboardPage").classList.toggle("active", dashboard);
+        if ($("tripsPage")) $("tripsPage").classList.toggle("active", !dashboard);
+        if ($("sideDashBtn")) $("sideDashBtn").classList.toggle("active", dashboard);
+        if ($("sideTripsBtn")) $("sideTripsBtn").classList.toggle("active", !dashboard);
+        if ($("mobileDashBtn")) $("mobileDashBtn").classList.toggle("active", dashboard);
+        if ($("mobileTripsBtn")) $("mobileTripsBtn").classList.toggle("active", !dashboard);
+        try { sessionStorage.setItem("05teamOwnerView", dashboard ? "dashboard" : "trips"); } catch(e) {}
+        window.scrollTo({top:0, behavior:"smooth"});
+      }
+
+      function humanHours(hours) {
+        if (!Number.isFinite(hours) || hours < 0) return "—";
+        if (hours < 1) return `${Math.max(1, Math.round(hours * 60))} min`;
+        if (hours < 24) {
+          const h=Math.floor(hours), m=Math.round((hours-h)*60);
+          return m ? `${h} h ${m} min` : `${h} h`;
+        }
+        const d=Math.floor(hours/24), h=Math.round(hours%24);
+        return h ? `${d} d ${h} h` : `${d} d`;
+      }
+
+      function renderTimeDashboard(trips) {
+        const now=Date.now();
+        const active=trips.filter(x=>!x.s.closed);
+        const closed=trips.filter(x=>x.s.closed && x.created_at && x.updated_at);
+        const closedDur=closed.map(x=>(new Date(x.updated_at)-new Date(x.created_at))/36e5).filter(v=>Number.isFinite(v)&&v>=0);
+        const inactive=active.map(x=>x.updated_at?(now-new Date(x.updated_at).getTime())/36e5:NaN).filter(v=>Number.isFinite(v)&&v>=0);
+        const avgClosed=closedDur.length?closedDur.reduce((a,b)=>a+b,0)/closedDur.length:NaN;
+        const avgInactive=inactive.length?inactive.reduce((a,b)=>a+b,0)/inactive.length:NaN;
+        const recent=inactive.filter(v=>v<2).length;
+        const recentRate=active.length?Math.round((recent/active.length)*100):0;
+        const maxInactive=inactive.length?Math.max(...inactive):NaN;
+        if($("avgClosedDuration")) $("avgClosedDuration").textContent=humanHours(avgClosed);
+        if($("avgInactiveTime")) $("avgInactiveTime").textContent=humanHours(avgInactive);
+        if($("recentUpdateRate")) $("recentUpdateRate").textContent=active.length?`${recentRate}%`:"—";
+        if($("maxInactiveTime")) $("maxInactiveTime").textContent=humanHours(maxInactive);
+
+        const recentClosed=closed.slice().sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at)).slice(0,6).map(x=>({x,h:(new Date(x.updated_at)-new Date(x.created_at))/36e5})).filter(o=>Number.isFinite(o.h)&&o.h>=0);
+        const maxDur=Math.max(...recentClosed.map(o=>o.h),1);
+        if($("durationChart")) $("durationChart").innerHTML=recentClosed.length?recentClosed.map(o=>{
+          const d=o.x.s.data||{}; const label=o.x.trip_code||d.tripCode||d.plate||"Viaje"; const pct=Math.max(4,Math.round((o.h/maxDur)*100));
+          return `<div class="duration-row"><span class="duration-label">${esc(label)}</span><div class="duration-track"><div class="duration-fill" style="width:${pct}%"></div></div><span class="duration-value">${esc(humanHours(o.h))}</span></div>`;
+        }).join(""):'<div class="dashboard-empty">Aún no hay viajes finalizados para comparar.</div>';
+
+        const health=active.slice().sort((a,b)=>new Date(a.updated_at||0)-new Date(b.updated_at||0)).slice(0,7);
+        if($("operationHealth")) $("operationHealth").innerHTML=health.length?health.map(x=>{
+          const d=x.s.data||{}; const h=x.updated_at?(now-new Date(x.updated_at).getTime())/36e5:999; const cls=h<1?"green":(h<2?"yellow":"red");
+          const status=h<1?"Actualización reciente":(h<2?"Revisar pronto":"Requiere revisión");
+          return `<div class="health-item"><div class="health-left"><i class="health-dot ${cls}"></i><div><b>${esc(x.trip_code||d.tripCode||d.plate||"Viaje")}</b><span>${esc(d.plate||"Sin placa")}</span></div></div><div style="text-align:right"><b>${esc(humanHours(h))}</b><span>${status}</span></div></div>`;
+        }).join(""):'<div class="dashboard-empty">No hay viajes activos.</div>';
+      }
 
       function renderVisualDashboard(trips) {
         const total = trips.length;
@@ -1617,6 +1728,7 @@
         if ($("refrigeratedCount")) $("refrigeratedCount").textContent = String(trips.filter(x => isRefrigeratedState(x.s)).length);
         if ($("domingaCount")) $("domingaCount").textContent = String(trips.filter(x => !isRefrigeratedState(x.s)).length);
         renderVisualDashboard(trips);
+        renderTimeDashboard(trips);
 
         if (mostRecent) {
           const st = mostRecent.s.step || 0;
