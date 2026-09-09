@@ -1196,8 +1196,8 @@
         depart: "", arrive1: "", tempP1: "", p1ret: "37",
         arrive2: "", tempP2: "", p2ret: "38",
         returnTime: "", returnedPlant: "75", receiver: "", notes: "",
-        departureDocument: null,
-        receptionDocument1: null, receptionDocument2: null,
+        departureDocument: [],
+        receptionDocument1: [], receptionDocument2: [],
         signedGuides1: [], signedGuides2: [],
         evidences: []
       };
@@ -1261,8 +1261,13 @@
 
       function normalizeState(s) {
         const state = s || {};
+        const mergedData = { ...data, ...(state.data || {}) };
+        ["departureDocument", "receptionDocument1", "receptionDocument2", "signedGuides1", "signedGuides2"].forEach((key) => {
+          const value = mergedData[key];
+          mergedData[key] = Array.isArray(value) ? value : (value ? [value] : []);
+        });
         return {
-          data: { ...data, ...(state.data || {}) },
+          data: mergedData,
           step: Number(state.step || 0),
           incidents: Number(state.incidents || (state.incidentLog || []).length || 0),
           incidentLog: Array.isArray(state.incidentLog) ? state.incidentLog : [],
@@ -2130,52 +2135,83 @@
         return photo();
       }
 
-      function documentUpload(key, title, help, multiple = false) {
+      function documentUpload(key, title, help, multiple = true) {
         const value = data[key];
-        const docs = multiple ? (Array.isArray(value) ? value : []) : (value ? [value] : []);
-        const status = docs.length ? (multiple
-          ? `<div class="doc-gallery">${docs.map((d,i) => `<div class="doc-thumb"><img src="${esc(d.url)}" alt="${esc(title)} ${i+1}"><small>✓ ${esc(d.time || "Subido")}</small></div>`).join("")}</div>`
-          : `<div class="doc-status"><img src="${esc(docs[0].url)}" alt="${esc(title)}"><div><b>✓ Documento subido correctamente</b><small>${esc(docs[0].name || title)} · ${esc(docs[0].time || "")}</small></div></div>`) : "";
-        const buttonText = multiple
-          ? (docs.length ? `📷 Tomar otra foto (${docs.length} subida${docs.length === 1 ? "" : "s"})` : "📷 Tomar foto de guía firmada")
-          : (docs.length ? "📷 Volver a tomar foto del documento" : "📷 Tomar foto del documento");
+        const docs = Array.isArray(value) ? value : (value ? [value] : []);
+        const status = docs.length
+          ? `<div class="doc-gallery">${docs.map((d,i) => `<div class="doc-thumb">
+              <button type="button" class="evidence-remove" title="Quitar esta foto" aria-label="Quitar esta foto" onclick="removeSpecialDocument('${key}',${i},this)">×</button>
+              <img src="${esc(d.url)}" alt="${esc(title)} ${i+1}">
+              <small><b>${esc(title)}${docs.length > 1 ? ` · Foto ${i+1}` : ""}</b><br>✓ ${esc(d.time || "Subido")}</small>
+            </div>`).join("")}</div>`
+          : `<div style="font-size:12px;color:var(--muted);margin-top:8px">Aún no hay fotos de este documento.</div>`;
+        const buttonText = docs.length
+          ? `📷 Agregar más fotos (${docs.length} subida${docs.length === 1 ? "" : "s"})`
+          : "📷 Tomar o seleccionar fotos del documento";
         return `<div class="doc-upload">
-          <div class="doc-upload-head"><span class="doc-upload-icon">${multiple ? "🖊" : "▤"}</span><div><b>${esc(title)}</b><small>${esc(help)}</small></div></div>
+          <div class="doc-upload-head"><span class="doc-upload-icon">▤</span><div><b>${esc(title)}</b><small>${esc(help)} Puedes subir todas las fotos que necesites.</small></div></div>
           <label class="photo">${buttonText}
-            <input type="file" accept="image/*" capture="environment" onchange="uploadSpecialDocument(this,'${key}','${esc(title)}',${multiple})">
+            <input type="file" accept="image/*" capture="environment" multiple onchange="uploadSpecialDocument(this,'${key}','${esc(title)}',true)">
           </label>
           ${status}
         </div>`;
       }
 
-      async function uploadSpecialDocument(input, key, title, multiple = false) {
-        const file = input.files?.[0];
-        if (!file || !configured()) return;
+      async function uploadSpecialDocument(input, key, title, multiple = true) {
+        const files = Array.from(input.files || []);
+        if (!files.length || !configured()) return;
         const label = input.closest(".photo");
+        let uploaded = 0;
         try {
-          label.childNodes[0].textContent = "⏳ Subiendo documento ";
-          const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-          const path = `${token}/documentos/${key}/${Date.now()}_${safeName}`;
-          const { error: upErr } = await sb.storage.from("evidencias").upload(path, file, { cacheControl: "3600", upsert: false });
-          if (upErr) throw upErr;
-          const { data: pub } = sb.storage.from("evidencias").getPublicUrl(path);
-          const docItem = {
-            url: pub.publicUrl, path, name: file.name, title,
-            stage: stepsFor()[step],
-            time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
-          };
-          if (multiple) {
-            data[key] = Array.isArray(data[key]) ? data[key] : [];
-            data[key].push(docItem);
-          } else {
-            data[key] = docItem;
+          label.childNodes[0].textContent = `⏳ Subiendo ${files.length === 1 ? "foto" : files.length + " fotos"} `;
+          const existing = data[key];
+          data[key] = Array.isArray(existing) ? existing : (existing ? [existing] : []);
+          for (const file of files) {
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+            const path = `${token}/documentos/${key}/${Date.now()}_${Math.random().toString(36).slice(2,7)}_${safeName}`;
+            const { error: upErr } = await sb.storage.from("evidencias").upload(path, file, { cacheControl: "3600", upsert: false });
+            if (upErr) throw upErr;
+            const { data: pub } = sb.storage.from("evidencias").getPublicUrl(path);
+            data[key].push({
+              url: pub.publicUrl, path, name: file.name, title,
+              stage: stepsFor()[step],
+              time: new Date().toLocaleString("es-PE", { dateStyle: "short", timeStyle: "short" })
+            });
+            uploaded++;
           }
-          logActivity("Documento subido", title);
+          logActivity("Documento subido", `${title} · ${uploaded} foto${uploaded === 1 ? "" : "s"}`);
+          await saveNow();
+          input.value = "";
+          render();
+        } catch (e) {
+          console.error(e);
+          if (uploaded) await saveNow();
+          label.childNodes[0].textContent = uploaded ? `⚠ Se subieron ${uploaded}; una foto falló. Reintentar ` : "⚠ No se pudo subir. Reintentar ";
+          input.value = "";
+          render();
+        }
+      }
+
+      async function removeSpecialDocument(key, index, button) {
+        const current = data[key];
+        const docs = Array.isArray(current) ? current : (current ? [current] : []);
+        const item = docs[index];
+        if (!item) return;
+        if (button) { button.disabled = true; button.textContent = "…"; }
+        try {
+          if (item.path) {
+            const { error } = await sb.storage.from("evidencias").remove([item.path]);
+            if (error) console.warn("No se pudo borrar el archivo de Storage; se quitará del reporte igualmente:", error);
+          }
+          docs.splice(index, 1);
+          data[key] = docs;
+          logActivity("Documento eliminado", item.title || key);
           await saveNow();
           render();
         } catch (e) {
           console.error(e);
-          label.childNodes[0].textContent = "⚠ No se pudo subir. Reintentar ";
+          if (button) { button.disabled = false; button.textContent = "×"; }
+          alert("No se pudo quitar la foto. Intenta nuevamente.");
         }
       }
 
@@ -2304,7 +2340,7 @@
 
         if (step === 3)
           h = `<button class="stamp" onclick="stamp('depart')">◷ Usar fecha y hora actual</button>${field(["depart","Fecha y hora de salida","datetime-local"])}
-               ${documentUpload("departureDocument", "Documento de salida", "Toma una foto legible del documento de salida antes de continuar.")}
+               ${documentUpload("departureDocument", "Documento de salida", "Sube fotos legibles del documento de salida antes de continuar.", true)}
                ${evidenceSection()}`;
 
         if (step === 4) h = delivery("1");
@@ -2335,7 +2371,7 @@
           ${field(["arrive" + n,"Fecha y hora de llegada","datetime-local"])}
           ${field(["tempP" + n,"Temperatura (°C)","number"])}
           ${field(["p" + n + "ret","Jabas recuperadas","number"])}
-          ${documentUpload("receptionDocument" + n, "Documento de recepción · Punto " + n, "Toma una foto legible del documento de recepción correspondiente a este punto.")}
+          ${documentUpload("receptionDocument" + n, "Documento de recepción · Punto " + n, "Sube fotos legibles del documento de recepción correspondiente a este punto.", true)}
           ${documentUpload("signedGuides" + n, "Guías firmadas · Punto " + n, "Debes tomar fotos de las guías firmadas en este punto. Puedes agregar más de una foto.", true)}
           ${evidenceSection()}`;
       }
@@ -2359,13 +2395,13 @@
         if (step === 2 && (!data.temp1 || [7,8,9].some(n => !data["c"+n])))
           m = "Completa los controles de carga y la temperatura.";
         if (step === 3 && !data.depart) m = "Registra la salida.";
-        if (step === 3 && data.depart && !data.departureDocument) m = "Sube el documento de salida para continuar.";
+        if (step === 3 && data.depart && (!Array.isArray(data.departureDocument) || !data.departureDocument.length)) m = "Sube el documento de salida para continuar.";
         if (step === 4 && (!data.arrive1 || !data.tempP1)) m = "Registra llegada y temperatura del punto 1.";
-        if (step === 4 && data.arrive1 && data.tempP1 && !data.receptionDocument1) m = "Sube el documento de recepción del punto 1.";
-        if (step === 4 && data.receptionDocument1 && (!Array.isArray(data.signedGuides1) || !data.signedGuides1.length)) m = "Sube al menos una foto de las guías firmadas del punto 1.";
+        if (step === 4 && data.arrive1 && data.tempP1 && (!Array.isArray(data.receptionDocument1) || !data.receptionDocument1.length)) m = "Sube el documento de recepción del punto 1.";
+        if (step === 4 && Array.isArray(data.receptionDocument1) && data.receptionDocument1.length && (!Array.isArray(data.signedGuides1) || !data.signedGuides1.length)) m = "Sube al menos una foto de las guías firmadas del punto 1.";
         if (step === 5 && (!data.arrive2 || !data.tempP2)) m = "Registra llegada y temperatura del punto 2.";
-        if (step === 5 && data.arrive2 && data.tempP2 && !data.receptionDocument2) m = "Sube el documento de recepción del punto 2.";
-        if (step === 5 && data.receptionDocument2 && (!Array.isArray(data.signedGuides2) || !data.signedGuides2.length)) m = "Sube al menos una foto de las guías firmadas del punto 2.";
+        if (step === 5 && data.arrive2 && data.tempP2 && (!Array.isArray(data.receptionDocument2) || !data.receptionDocument2.length)) m = "Sube el documento de recepción del punto 2.";
+        if (step === 5 && Array.isArray(data.receptionDocument2) && data.receptionDocument2.length && (!Array.isArray(data.signedGuides2) || !data.signedGuides2.length)) m = "Sube al menos una foto de las guías firmadas del punto 2.";
         if (step === 6 && (!data.returnTime || !data.receiver)) m = "Registra el retorno y quién recibe.";
         showMessage(m);
         return !m;
