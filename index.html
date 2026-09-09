@@ -1189,6 +1189,13 @@
                 <h1>Viajes</h1>
                 <p>Crea operaciones y revisa su avance, evidencias, incidencias y reportes.</p>
               </section>
+              <section class="dashboard-kpis trips-kpis">
+                <div class="dash-kpi"><small>Viajes activos</small><b id="tripsActiveCount">0</b><span id="tripsActiveText">Sin operaciones</span></div>
+                <div class="dash-kpi"><small>Finalizados</small><b id="tripsClosedCount">0</b><span>Operaciones cerradas</span></div>
+                <div class="dash-kpi alert"><small>Con incidencia</small><b id="tripsIncidentTripCount">0</b><span>Requieren atención</span></div>
+                <div class="dash-kpi cold"><small>Refrigerados</small><b id="tripsRefrigeratedCount">0</b><span>Viajes registrados</span></div>
+                <div class="dash-kpi"><small>La Dominga</small><b id="tripsDomingaCount">0</b><span>Viajes registrados</span></div>
+              </section>
               <div class="create-grid">
                 <section class="create">
                   <div><div class="eyebrow" style="color:#b9edc1">NUEVA ASIGNACIÓN</div><h2>Crear viaje para La Dominga</h2><p>Flujo operativo completo con controles, documentos y evidencias.</p></div>
@@ -1693,6 +1700,8 @@
         if (!configured()) {
           $("activeCount").textContent = "0";
           $("activeText").textContent = "Configura Supabase";
+          if ($("tripsActiveCount")) $("tripsActiveCount").textContent = "0";
+          if ($("tripsActiveText")) $("tripsActiveText").textContent = "Configura Supabase";
           $("stageCount").textContent = "0/8";
           $("stageText").textContent = "Sin conexión";
           $("incidentCount").textContent = "0";
@@ -1718,15 +1727,29 @@
         const totalIncidents = trips.reduce((a, x) => a + (x.s.incidentLog || []).length, 0);
         const mostRecent = trips[0];
 
-        $("activeCount").textContent = String(activeTrips.length);
-        $("activeText").textContent = activeTrips.length
+        const activeTextValue = activeTrips.length
           ? "Operaciones en curso"
           : (trips.length ? "Sin viajes activos" : "Todavía no hay viajes");
+        const closedTotal = trips.filter(x => x.s.closed).length;
+        const incidentTripTotal = trips.filter(x => (x.s.incidentLog || []).some(i => (i.status || "pending") !== "resolved")).length;
+        const refrigeratedTotal = trips.filter(x => isRefrigeratedState(x.s)).length;
+        const domingaTotal = trips.filter(x => !isRefrigeratedState(x.s)).length;
+
+        $("activeCount").textContent = String(activeTrips.length);
+        $("activeText").textContent = activeTextValue;
         $("incidentCount").textContent = String(totalIncidents);
-        if ($("closedCount")) $("closedCount").textContent = String(trips.filter(x => x.s.closed).length);
-        if ($("incidentTripCount")) $("incidentTripCount").textContent = String(trips.filter(x => (x.s.incidentLog || []).some(i => (i.status || "pending") !== "resolved")).length);
-        if ($("refrigeratedCount")) $("refrigeratedCount").textContent = String(trips.filter(x => isRefrigeratedState(x.s)).length);
-        if ($("domingaCount")) $("domingaCount").textContent = String(trips.filter(x => !isRefrigeratedState(x.s)).length);
+        if ($("closedCount")) $("closedCount").textContent = String(closedTotal);
+        if ($("incidentTripCount")) $("incidentTripCount").textContent = String(incidentTripTotal);
+        if ($("refrigeratedCount")) $("refrigeratedCount").textContent = String(refrigeratedTotal);
+        if ($("domingaCount")) $("domingaCount").textContent = String(domingaTotal);
+
+        // V22 · El mismo resumen operativo también se muestra en el módulo Viajes.
+        if ($("tripsActiveCount")) $("tripsActiveCount").textContent = String(activeTrips.length);
+        if ($("tripsActiveText")) $("tripsActiveText").textContent = activeTextValue;
+        if ($("tripsClosedCount")) $("tripsClosedCount").textContent = String(closedTotal);
+        if ($("tripsIncidentTripCount")) $("tripsIncidentTripCount").textContent = String(incidentTripTotal);
+        if ($("tripsRefrigeratedCount")) $("tripsRefrigeratedCount").textContent = String(refrigeratedTotal);
+        if ($("tripsDomingaCount")) $("tripsDomingaCount").textContent = String(domingaTotal);
         renderVisualDashboard(trips);
         renderTimeDashboard(trips);
 
