@@ -1059,10 +1059,10 @@
           <section class="create">
             <div>
               <div class="eyebrow" style="color: #b9edc1">NUEVA ASIGNACIÓN</div>
-              <h2>Crear viaje y enviar enlace</h2>
+              <h2>Crear viaje para La Dominga</h2>
               <p>Flujo operativo completo con controles, documentos y evidencias.</p>
             </div>
-            <button class="primary" onclick="createTrip('normal')">Crear viaje →</button>
+            <button class="primary" onclick="createTrip('normal')">Crear viaje para La Dominga →</button>
           </section>
           <section class="create refrigerated">
             <div>
@@ -1663,7 +1663,7 @@
         doc.text(refrigerated ? "REPORTE DE VIAJE REFRIGERADO" : "REPORTE DE VIAJE", 40, 13);
         doc.setFontSize(9.5);
         doc.setFont("helvetica", "normal");
-        doc.text("LA DOMINGA VIAJES · 05TEAM", 40, 20);
+        doc.text("LOGISTICA 05 TEAM", 40, 20);
         doc.text(`Código ${pdfSafe(code)}  |  Generado ${pdfSafe(now)}`, 40, 26);
 
         doc.setTextColor(20, 35, 25);
@@ -1681,9 +1681,9 @@
         });
 
         const general = (refrigerated ? [
-          ["Tipo de viaje", "Refrigerado"], ["Conductor", d.driver], ["Telefono", d.phone], ["Placa", d.plate], ["Auxiliar", d.helper]
+          ["Tipo de viaje", "Refrigerado"], ["Conductor", d.driver], ["Telefono", d.phone], ["Placa", d.plate], ["Cliente", d.helper]
         ] : [
-          ["Conductor", d.driver], ["Telefono", d.phone], ["Placa", d.plate], ["Auxiliar", d.helper],
+          ["Conductor", d.driver], ["Telefono", d.phone], ["Placa", d.plate],
           ["Temp. inicial", d.temp0 ? `${d.temp0} C` : ""], ["Temp. carga", d.temp1 ? `${d.temp1} C` : ""],
           ["Salida", pdfDate(d.depart)], ["Llegada Punto 1", pdfDate(d.arrive1)],
           ["Temp. Punto 1", d.tempP1 ? `${d.tempP1} C` : ""], ["Llegada Punto 2", pdfDate(d.arrive2)],
@@ -1749,8 +1749,8 @@
         if (y > 235) { doc.addPage(); y = 18; }
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
-        doc.text("Actividad reciente", 14, y);
-        const activityRows = activity.length ? activity.slice(0, 30).map(x => [
+        doc.text("Registro general con tiempos", 14, y);
+        const activityRows = activity.length ? activity.slice().reverse().slice(0, 30).map(x => [
           pdfSafe(x.time), pdfSafe(x.stage), pdfSafe(x.action), pdfSafe(x.detail)
         ]) : [["-", "-", "Sin actividad", "Aun no hay registros de actividad."]];
         doc.autoTable({
@@ -1899,7 +1899,7 @@
           doc.setFont("helvetica", "bold");
           doc.setTextColor(5, 79, 33);
           doc.setFontSize(8);
-          doc.text("05TEAM · La Dominga Viajes", 14, 289);
+          doc.text("LOGISTICA 05 TEAM", 14, 289);
           doc.setFont("helvetica", "normal");
           doc.setTextColor(105, 115, 108);
           doc.text(`${pdfSafe(code)} · Página ${i} de ${pages}`, 196, 289, { align: "right" });
@@ -1933,10 +1933,10 @@
         const pct = s.closed ? 100 : Math.min(100, Math.round(((st + 1) / tripSteps.length) * 100));
 
         const rows = refrigerated ? [
-          ["Tipo de viaje", "Refrigerado"], ["Conductor", d.driver], ["Teléfono", d.phone], ["Placa", d.plate], ["Auxiliar", d.helper]
+          ["Tipo de viaje", "Refrigerado"], ["Conductor", d.driver], ["Teléfono", d.phone], ["Placa", d.plate], ["Cliente", d.helper]
         ] : [
           ["Conductor", d.driver], ["Teléfono", d.phone], ["Placa", d.plate],
-          ["Auxiliar", d.helper], ["Temperatura inicial", d.temp0 && d.temp0 + " °C"],
+          ["Temperatura inicial", d.temp0 && d.temp0 + " °C"],
           ["Temperatura carga", d.temp1 && d.temp1 + " °C"], ["Salida", d.depart],
           ["Punto 1", d.arrive1], ["Punto 2", d.arrive2], ["Retorno", d.returnTime]
         ];
@@ -2257,7 +2257,7 @@
         if (step === 0)
           h = field(["driver","Nombre completo del conductor","text","Nombres y apellidos"]) +
               `<div class="two">${field(["phone","Teléfono","tel","999 999 999"])}${field(["plate","Placa","text","ABC-123"])}</div>` +
-              field(["helper","Auxiliar (opcional)"]) +
+              field(["helper", refrigerated ? "Cliente" : "Auxiliar (opcional)", "text", refrigerated ? "Nombre del cliente" : ""]) +
               (!refrigerated ? photo() : "");
 
         if (refrigerated && step > 0) {
