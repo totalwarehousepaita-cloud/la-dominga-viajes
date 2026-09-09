@@ -1036,6 +1036,21 @@
         .severity { grid-template-columns:1fr; }
       }
 
+      /* V18 · Centro de control avanzado */
+      .dashboard-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:18px 0}
+      .dash-kpi{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 6px 18px rgba(8,54,28,.05)}
+      .dash-kpi small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:800;letter-spacing:.04em}.dash-kpi b{display:block;font-size:27px;margin-top:5px}.dash-kpi.alert b{color:#b42318}.dash-kpi.cold b{color:#168aad}
+      .ops-filters{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr auto;gap:10px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;margin:12px 0 18px}
+      .ops-filters input,.ops-filters select{width:100%;border:1px solid #dce8df;border-radius:10px;padding:10px 11px;background:#fff;font:inherit}
+      .progress-meta{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:12px;color:var(--muted)}
+      .timeline-v18{position:relative;padding-left:24px}.timeline-v18:before{content:'';position:absolute;left:7px;top:5px;bottom:5px;width:2px;background:#dbe9df}
+      .timeline-event{position:relative;padding:0 0 16px 10px}.timeline-event:before{content:'';position:absolute;left:-21px;top:4px;width:10px;height:10px;border-radius:50%;background:#20c92b;border:3px solid #e8f8eb}
+      .timeline-event small{display:block;color:var(--muted);font-size:11px}.timeline-event b{display:block;margin:2px 0}.timeline-event span{display:block;color:#526158;font-size:13px}
+      .incident-item.v18{border-left:4px solid #ef4444}.incident-status{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:900;margin-top:7px}.incident-status.pending{background:#fee2e2;color:#991b1b}.incident-status.attending{background:#fef3c7;color:#92400e}.incident-status.resolved{background:#dcfce7;color:#166534}
+      .incident-controls{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.incident-controls button{border:1px solid #d6e4da;background:#fff;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:800;cursor:pointer}
+      @media(max-width:900px){.dashboard-kpis{grid-template-columns:repeat(2,1fr)}.ops-filters{grid-template-columns:1fr 1fr}.ops-filters .filter-search{grid-column:1/-1}}
+      @media(max-width:520px){.dashboard-kpis{grid-template-columns:1fr 1fr}.ops-filters{grid-template-columns:1fr}.ops-filters .filter-search{grid-column:auto}}
+
     </style>
   </head>
   <body>
@@ -1073,19 +1088,20 @@
             <button class="primary refrigerated-btn" onclick="createTrip('refrigerated')">Crear viaje refrigerado →</button>
           </section>
         </div>
-        <section class="metrics">
-          <div class="metric">
-            <span>Viajes activos</span><b id="activeCount">0</b
-            ><small id="activeText">Todavía no hay viajes</small>
-          </div>
-          <div class="metric">
-            <span>Etapa actual</span><b id="stageCount">0/8</b
-            ><small id="stageText">Sin actividad</small>
-          </div>
-          <div class="metric">
-            <span>Incidencias</span><b id="incidentCount">0</b
-            ><small>Reportadas por el transportista</small>
-          </div>
+        <section class="dashboard-kpis">
+          <div class="dash-kpi"><small>Viajes activos</small><b id="activeCount">0</b><span id="activeText">Sin operaciones</span></div>
+          <div class="dash-kpi"><small>Finalizados</small><b id="closedCount">0</b><span>Operaciones cerradas</span></div>
+          <div class="dash-kpi alert"><small>Con incidencia</small><b id="incidentTripCount">0</b><span id="incidentCount" style="display:none">0</span><span>Requieren atención</span></div>
+          <div class="dash-kpi cold"><small>Refrigerados</small><b id="refrigeratedCount">0</b><span>Viajes registrados</span></div>
+          <div class="dash-kpi"><small>La Dominga</small><b id="domingaCount">0</b><span>Viajes registrados</span></div>
+          <span id="stageCount" style="display:none">0/8</span><span id="stageText" style="display:none">Sin actividad</span>
+        </section>
+        <section class="ops-filters">
+          <input class="filter-search" id="filterSearch" placeholder="Buscar cliente, placa, conductor o código…" oninput="applyOwnerFilters()">
+          <select id="filterType" onchange="applyOwnerFilters()"><option value="all">Todos los tipos</option><option value="normal">La Dominga</option><option value="refrigerated">Refrigerado</option></select>
+          <select id="filterStatus" onchange="applyOwnerFilters()"><option value="all">Todos los estados</option><option value="active">Activos</option><option value="closed">Finalizados</option><option value="incident">Con incidencia</option></select>
+          <input id="filterDate" type="date" onchange="applyOwnerFilters()">
+          <button class="secondary" onclick="clearOwnerFilters()">Limpiar</button>
         </section>
         <div class="section-title">
           <div class="eyebrow">SEGUIMIENTO EN VIVO</div>
@@ -1186,6 +1202,7 @@
       let liveToken = "";
       let realtimeChannel = null;
       let ownerChannel = null;
+      let ownerTripsCache = [];
       let saveTimer = null;
       let lastSavedJson = "";
       let data = {
@@ -1501,6 +1518,7 @@
         }
 
         const trips = (rows || []).map(r => ({ ...r, s: normalizeState(r.state) }));
+        ownerTripsCache = trips;
         const activeTrips = trips.filter(x => !x.s.closed);
         const totalIncidents = trips.reduce((a, x) => a + (x.s.incidentLog || []).length, 0);
         const mostRecent = trips[0];
@@ -1510,6 +1528,10 @@
           ? "Operaciones en curso"
           : (trips.length ? "Sin viajes activos" : "Todavía no hay viajes");
         $("incidentCount").textContent = String(totalIncidents);
+        if ($("closedCount")) $("closedCount").textContent = String(trips.filter(x => x.s.closed).length);
+        if ($("incidentTripCount")) $("incidentTripCount").textContent = String(trips.filter(x => (x.s.incidentLog || []).some(i => (i.status || "pending") !== "resolved")).length);
+        if ($("refrigeratedCount")) $("refrigeratedCount").textContent = String(trips.filter(x => isRefrigeratedState(x.s)).length);
+        if ($("domingaCount")) $("domingaCount").textContent = String(trips.filter(x => !isRefrigeratedState(x.s)).length);
 
         if (mostRecent) {
           const st = mostRecent.s.step || 0;
@@ -1527,29 +1549,55 @@
           return;
         }
 
+        renderOwnerTripList(trips);
+      }
+
+      function renderOwnerTripList(trips) {
         $("tripList").className = "";
-        $("tripList").innerHTML = trips.map(({ token: t, trip_code, s }) => {
-          const d = s.data || {};
-          const st = s.step || 0;
-          const tripSteps = stepsFor(s);
-          const refrigerated = isRefrigeratedState(s);
+        if (!trips.length) {
+          $("tripList").className = "empty";
+          $("tripList").innerHTML = "<b>No hay resultados</b><span>Prueba cambiando los filtros.</span>";
+          return;
+        }
+        $("tripList").innerHTML = trips.map(({ token: t, trip_code, created_at, s }) => {
+          const d = s.data || {}, st = Number(s.step || 0), tripSteps = stepsFor(s), refrigerated = isRefrigeratedState(s);
           const status = s.closed ? "CERRADO" : (tripSteps[st] || "Pendiente");
-          const pct = s.closed ? 100 : Math.min(100, ((st + 1) / tripSteps.length) * 100);
-          return `
-            <div class="trip ${refrigerated ? "refrigerated-trip" : ""}" onclick="openTripLive('${esc(t)}')"
-                 style="margin-bottom:12px">
-              <span class="trip-type-badge ${refrigerated ? "refrigerated" : "normal"}">${refrigerated ? "❄ VIAJE REFRIGERADO" : "VIAJE OPERATIVO"}</span>
-              <b>${esc(d.driver || "Transportista pendiente")}</b>
-              <small>${esc(trip_code || d.tripCode || "Viaje")} · ${esc(d.plate || "Sin placa")} · ${esc(status)}</small>
-              <div class="bar"><i style="width:${pct}%"></i></div>
-              <small>${s.closed ? "Viaje finalizado" : `${esc(tripSteps[st] || "Pendiente")} · Pulsa para ver los datos`}</small>
-              <div class="trip-actions">
-                <button class="report-btn" onclick="downloadTripPdf('${esc(t)}', event)">⬇ Descargar PDF</button>
-                <button class="danger" onclick="deleteTrip(event,'${esc(t)}')">Eliminar viaje</button>
-              </div>
-            </div>`;
+          const completed = s.closed ? tripSteps.length : Math.min(st, tripSteps.length);
+          const pct = s.closed ? 100 : Math.min(100, Math.round((completed / tripSteps.length) * 100));
+          const openIncidents = (s.incidentLog || []).filter(i => (i.status || "pending") !== "resolved").length;
+          return `<div class="trip ${refrigerated ? "refrigerated-trip" : ""}" onclick="openTripLive('${esc(t)}')" style="margin-bottom:12px">
+            <span class="trip-type-badge ${refrigerated ? "refrigerated" : "normal"}">${refrigerated ? "❄ VIAJE REFRIGERADO" : "VIAJE LA DOMINGA"}</span>
+            ${openIncidents ? `<span class="trip-type-badge" style="background:#fee2e2;color:#991b1b;margin-left:6px">⚠ ${openIncidents} INCIDENCIA${openIncidents>1?'S':''}</span>` : ''}
+            <b>${esc(d.driver || "Transportista pendiente")}</b>
+            <small>${esc(trip_code || d.tripCode || "Viaje")} · ${esc(d.plate || "Sin placa")} · ${esc(d.helper || "Cliente pendiente")} · ${esc(status)}</small>
+            <div class="bar"><i style="width:${pct}%"></i></div>
+            <div class="progress-meta"><span>${s.closed ? "Viaje finalizado" : `${completed}/${tripSteps.length} etapas completadas · ${pct}%`}</span><span>${esc(status)}</span></div>
+            <div class="trip-actions"><button class="report-btn" onclick="downloadTripPdf('${esc(t)}', event)">⬇ Descargar PDF</button><button class="danger" onclick="deleteTrip(event,'${esc(t)}')">Eliminar viaje</button></div>
+          </div>`;
         }).join("");
       }
+
+      function applyOwnerFilters() {
+        const q = (($("filterSearch") && $("filterSearch").value) || "").trim().toLowerCase();
+        const type = ($("filterType") && $("filterType").value) || "all";
+        const status = ($("filterStatus") && $("filterStatus").value) || "all";
+        const date = ($("filterDate") && $("filterDate").value) || "";
+        const filtered = ownerTripsCache.filter(x => {
+          const s=x.s, d=s.data||{}, refrigerated=isRefrigeratedState(s), logs=s.incidentLog||[];
+          const hay=[x.trip_code,d.tripCode,d.driver,d.phone,d.plate,d.helper].filter(Boolean).join(" ").toLowerCase();
+          if(q && !hay.includes(q)) return false;
+          if(type==="normal" && refrigerated) return false;
+          if(type==="refrigerated" && !refrigerated) return false;
+          if(status==="active" && s.closed) return false;
+          if(status==="closed" && !s.closed) return false;
+          if(status==="incident" && !logs.some(i => (i.status||"pending")!=="resolved")) return false;
+          if(date && String(x.created_at||"").slice(0,10)!==date) return false;
+          return true;
+        });
+        renderOwnerTripList(filtered);
+      }
+      function clearOwnerFilters(){ if($("filterSearch")) $("filterSearch").value=""; if($("filterType")) $("filterType").value="all"; if($("filterStatus")) $("filterStatus").value="all"; if($("filterDate")) $("filterDate").value=""; renderOwnerTripList(ownerTripsCache); }
+
 
       function pdfSafe(value) {
         if (value === null || value === undefined || value === "") return "Pendiente";
@@ -1761,7 +1809,7 @@
         doc.setFontSize(12);
         doc.text("Incidencias", 14, y);
         const incidentRows = logs.length ? logs.map(x => [
-          pdfSafe(x.time), pdfSafe(x.type), pdfSafe(x.severity), pdfSafe(x.description), pdfSafe(x.location || "-")
+          pdfSafe(x.time), pdfSafe(x.type), pdfSafe(x.severity), pdfSafe((x.description||"") + " · Estado: " + ((x.status||"pending")==="resolved"?"Resuelta":(x.status||"pending")==="attending"?"En atención":"Pendiente")), pdfSafe(x.location || "-")
         ]) : [["-", "Sin incidencias", "-", "No se han reportado incidencias.", "-"]];
         doc.autoTable({
           startY: y + 3,
@@ -1976,13 +2024,13 @@
            </div>`).join("");
 
         const activity = events.length
-          ? events.slice(0, 30).map(x =>
-              `<div class="event"><small>${esc(x.time)} · ${esc(x.stage)}</small><b>${esc(x.action)}</b><span>${esc(x.detail)}</span></div>`).join("")
+          ? events.slice().reverse().slice(0, 50).map(x =>
+              `<div class="timeline-event"><small>${esc(x.time)} · ${esc(x.stage)}</small><b>${esc(x.action)}</b><span>${esc(x.detail)}</span></div>`).join("")
           : '<div class="activity-empty">Esperando la primera actualización del transportista.</div>';
 
         const incidentHtml = logs.length
-          ? logs.map(x =>
-              `<div class="incident-item"><small>${esc(x.time)} · ${esc(x.severity)}</small><b>${esc(x.type)}</b><span>${esc(x.description)}</span>${x.location ? `<span>📍 ${esc(x.location)}</span>` : ""}</div>`).join("")
+          ? logs.map((x,idx) => { const stat=x.status||"pending"; const label=stat==="resolved"?"Resuelta":stat==="attending"?"En atención":"Pendiente"; return
+              `<div class="incident-item v18"><small>${esc(x.time)} · ${esc(x.severity)}</small><b>${esc(x.type)}</b><span>${esc(x.description)}</span>${x.location ? `<span>📍 ${esc(x.location)}</span>` : ""}<span class="incident-status ${stat}">${label}</span><div class="incident-controls"><button onclick="setIncidentStatus('${esc(t)}',${idx},'pending')">Pendiente</button><button onclick="setIncidentStatus('${esc(t)}',${idx},'attending')">En atención</button><button onclick="setIncidentStatus('${esc(t)}',${idx},'resolved')">✓ Resuelta</button></div></div>` }).join("")
           : '<div class="incident-info">Sin incidencias reportadas.</div>';
 
         const evidenceItems = Array.isArray(d.evidences) ? d.evidences : [];
@@ -2035,9 +2083,17 @@
               <div class="monitor-section"><h3>Incidencias</h3>${incidentHtml}</div>
               ${documentsHtml}
               ${evidenceHtml}
-              <div class="monitor-section"><h3>Actividad reciente</h3><div class="timeline">${activity}</div></div>
+              <div class="monitor-section"><h3>Línea de tiempo del viaje</h3><div class="timeline-v18">${activity}</div></div>
             </aside>
           </div>`;
+      }
+
+      async function setIncidentStatus(t, index, status) {
+        const row = await fetchTrip(t); if(!row) return;
+        const state = normalizeState(row.state); const arr = Array.isArray(state.incidentLog) ? state.incidentLog.slice() : [];
+        if(!arr[index]) return; arr[index] = {...arr[index], status, statusUpdatedAt:new Date().toISOString()}; state.incidentLog = arr;
+        const {error}=await sb.from("trips").update({state}).eq("token",t); if(error) return alert("No se pudo actualizar la incidencia.");
+        await renderOwner(); const fresh=await fetchTrip(t); if(fresh) showLive(fresh.state,t,fresh.trip_code);
       }
 
       function subscribeOwner() {
